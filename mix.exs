@@ -92,14 +92,10 @@ defmodule LinearSDK.MixProject do
         build_support/dependency_resolver.exs
         lib
         codegen
-        priv/upstream
         CHANGELOG.md
         LICENSE
         README.md
         mix.exs
-        guides
-        examples
-        TASKS.md
       ),
       licenses: ["MIT"],
       links: %{
