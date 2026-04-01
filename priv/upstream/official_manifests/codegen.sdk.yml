@@ -1,0 +1,32 @@
+overwrite: true
+schema: ./src/schema.graphql
+documents: ./src/_generated_documents.graphql
+hooks:
+  afterOneFileWrite:
+    - prettier --write
+config:
+  documentFile: ./_generated_documents
+  dedupeFragments: true
+  skipDocumentsValidation:
+    ignoreRules:
+      - OverlappingFieldsCanBeMergedRule
+  skipComments:
+    - "[Internal]"
+    - "[INTERNAL]"
+    - "[ALPHA]"
+  skipFields:
+    - integrationResource
+    - integrationResources
+generates:
+  src/_generated_documents.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typed-document-node
+    config:
+      documentMode: string
+      namingConvention: "./naming-override#caseify"
+      preResolveTypes: false
+  src/_generated_sdk.ts:
+    plugins:
+      - "@linear/codegen-sdk"

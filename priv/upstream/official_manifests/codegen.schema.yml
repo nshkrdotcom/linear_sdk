@@ -1,0 +1,21 @@
+overwrite: true
+schema:
+  - https://api.linear.app/graphql
+  - apollo-engine:
+      engine:
+        apiKey: ''
+      graph: Linear-Webhooks
+      variant: current
+hooks:
+  afterOneFileWrite:
+    - prettier --write
+generates:
+  src/schema.json:
+    plugins:
+      - introspection
+  src/schema.graphql:
+    plugins:
+      - schema-ast
+    config:
+      includeDirectives: true
+      sort: true
