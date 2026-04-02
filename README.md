@@ -101,14 +101,15 @@ not use mocks or fake transports.
 
 ```bash
 export LINEAR_API_KEY=lin_api_...
-mix run examples/viewer.exs
-mix run examples/symphony_candidate_issues.exs
-mix run examples/symphony_state_lookup.exs
+examples/run_all.sh
 ```
 
-Mutation examples are available too, but they intentionally require
-`LINEAR_CONFIRM_WRITE=1` before they will comment on or transition a real issue.
-See [examples/README.md](examples/README.md) for the full list.
+That default suite is read-only and auto-discovers a project slug and issue
+when your workspace has accessible data. If there is no accessible project slug,
+the polling example falls back to a workspace-scoped issue query so the suite
+still runs. Mutation examples are available too, but they intentionally require
+`LINEAR_CONFIRM_WRITE=1` before they will comment on or transition a real
+issue. See [examples/README.md](examples/README.md) for the full list.
 
 ## Docs Map
 

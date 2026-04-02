@@ -6,14 +6,26 @@ alias LinearSDK.Examples.SymphonyHelpers
 Live.confirm_write!()
 
 client = Live.client!()
-issue_ref = Live.env!("LINEAR_ISSUE_REF")
-comment_body = Live.env!("LINEAR_COMMENT_BODY")
+project_slug = Live.env("LINEAR_PROJECT_SLUG")
 
-issue = SymphonyHelpers.lookup_issue!(client, issue_ref)
+{issue_ref, issue_ref_source, discovered_issue} =
+  case Live.env("LINEAR_ISSUE_REF") do
+    nil ->
+      issue = SymphonyHelpers.discover_issue!(client, project_slug)
+      {issue["identifier"] || issue["id"], "auto", issue}
+
+    value ->
+      {value, "env", nil}
+  end
+
+comment_body = Live.env("LINEAR_COMMENT_BODY", "Live test comment from LinearSDK examples")
+
+issue = discovered_issue || SymphonyHelpers.lookup_issue!(client, issue_ref)
 response = SymphonyHelpers.create_comment!(client, issue["id"], comment_body)
 
 Live.print("Symphony comment create", %{
   requested_issue_ref: issue_ref,
+  requested_issue_ref_source: issue_ref_source,
   resolved_issue: %{
     id: issue["id"],
     identifier: issue["identifier"],

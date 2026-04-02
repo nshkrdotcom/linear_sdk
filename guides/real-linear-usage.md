@@ -56,7 +56,11 @@ The examples in `examples/` cover those same surfaces.
 - create API keys for you
 - run the OAuth authorization code flow for you
 - store or refresh tokens
-- guess your project slug, issue reference, or workflow states
+- alter your Linear workspace setup for you
+
+The example suite does auto-discover a project slug and issue when your
+workspace already has accessible data. That is an example-layer convenience,
+not hidden SDK state.
 
 ## Step 1: Create A Personal API Key
 
@@ -87,7 +91,26 @@ LinearSDK.Client.new!(access_token: System.fetch_env!("LINEAR_OAUTH_ACCESS_TOKEN
 
 But the OAuth app setup and token exchange still happen outside this SDK.
 
-## Step 2: Find The Values The Examples Need
+## Step 2: Understand Which Values Are Actually Required
+
+For the SDK examples:
+
+- `LINEAR_API_KEY` is the only always-required variable
+- `LINEAR_PROJECT_SLUG` is optional; the examples auto-discover one when
+  possible
+- if no project slug is available, the candidate-issues example falls back to a
+  workspace-scoped query so the read-only suite still works
+- `LINEAR_ISSUE_REF` is optional; the examples auto-discover one when possible
+- `LINEAR_TARGET_STATE` is optional; state lookup defaults to the current
+  state, while the transition example auto-picks a different workflow state
+  when possible
+
+For Symphony itself, the requirement is stricter:
+
+- `tracker.project_slug` is required in Symphony's runtime config because its
+  candidate issue polling is intentionally project-scoped
+
+## Step 3: Find The Values When You Want To Pin The Examples
 
 ### Project Slug
 
@@ -151,7 +174,13 @@ that behavior with:
 - `LINEAR_ASSIGNEE=<linear-user-id>`
   - keep only issues assigned to that user ID
 
-## Step 3: Run The Read-Only Examples First
+## Step 4: Run The Read-Only Examples First
+
+Full read-only suite:
+
+```bash
+examples/run_all.sh
+```
 
 Current user:
 
@@ -176,7 +205,7 @@ mix run examples/symphony_state_lookup.exs
 
 These examples are safe and read-only.
 
-## Step 4: Run The Write Examples On A Disposable Test Issue
+## Step 5: Run The Write Examples On A Disposable Test Issue
 
 Comment on an issue:
 
@@ -191,6 +220,14 @@ Transition an issue:
 
 ```bash
 export LINEAR_ISSUE_REF=ENG-123
+export LINEAR_CONFIRM_WRITE=1
+mix run examples/symphony_transition_issue.exs
+```
+
+Optionally pin the transition target explicitly:
+
+```bash
+export LINEAR_ISSUE_REF=ENG-123
 export LINEAR_TARGET_STATE="In Progress"
 export LINEAR_CONFIRM_WRITE=1
 mix run examples/symphony_transition_issue.exs
@@ -201,10 +238,12 @@ Those scripts perform real mutations against Linear.
 ## Recommended Onboarding Flow For A New User
 
 1. Create a personal API key in Linear and export `LINEAR_API_KEY`.
-2. Run `mix run examples/viewer.exs`.
-3. Copy a project slug from Linear and export `LINEAR_PROJECT_SLUG`.
-4. Run `mix run examples/symphony_candidate_issues.exs`.
-5. Pick a disposable issue, export `LINEAR_ISSUE_REF`, and inspect it with
+2. Run `examples/run_all.sh` or start with `mix run examples/viewer.exs`.
+3. If you want to pin the polling example to a specific project, export
+   `LINEAR_PROJECT_SLUG`.
+4. If you want to pin the issue-focused examples to a specific issue, export
+   `LINEAR_ISSUE_REF`.
+5. Inspect the resolved issue and state with
    `mix run examples/symphony_state_lookup.exs`.
 6. Only after that, try the comment and transition examples with
    `LINEAR_CONFIRM_WRITE=1`.

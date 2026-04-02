@@ -55,7 +55,7 @@ defmodule LinearSDK.ClientTest do
     expect(LinearSDK.TransportMock, :execute, fn context, payload, _opts ->
       assert context.base_url == "https://api.linear.app/graphql"
       assert {"authorization", "linear-api-key"} in context.headers
-      assert payload["operationName"] == "AdHocQuery"
+      assert payload["operationName"] == "Viewer"
 
       {:ok,
        %{
@@ -73,6 +73,34 @@ defmodule LinearSDK.ClientTest do
 
     assert {:ok, %Response{request_id: "linear-1", data: %{"viewer" => %{"id" => "u1"}}}} =
              Client.execute_document(client, "query Viewer { viewer { id } }")
+  end
+
+  test "passes operation_name through execute_document for multi-operation documents" do
+    expect(LinearSDK.TransportMock, :execute, fn _context, payload, opts ->
+      assert payload["operationName"] == "Viewer"
+      refute Keyword.has_key?(opts, :operation_name)
+
+      {:ok,
+       %{
+         status: 200,
+         headers: [{"x-request-id", "linear-ops"}],
+         body: %{"data" => %{"viewer" => %{"id" => "u1"}}}
+       }}
+    end)
+
+    client =
+      Client.new!(
+        api_key: "linear-api-key",
+        transport: LinearSDK.TransportMock
+      )
+
+    document = """
+    query Viewer { viewer { id } }
+    mutation IssueArchive($id: String!) { issueArchive(id: $id) { success } }
+    """
+
+    assert {:ok, %Response{request_id: "linear-ops", data: %{"viewer" => %{"id" => "u1"}}}} =
+             Client.execute_document(client, document, %{}, operation_name: "Viewer")
   end
 
   test "normalizes GraphQL failures into a provider error" do

@@ -3,50 +3,29 @@ Code.require_file("support/symphony_helpers.exs", __DIR__)
 alias LinearSDK.Examples.LiveHelpers, as: Live
 alias LinearSDK.Examples.SymphonyHelpers
 
-defmodule LinearSDK.Examples.SymphonyCandidateIssues do
+defmodule LinearSDK.Examples.SymphonyCandidateIssuesMe do
   @moduledoc false
 
   alias LinearSDK.Client
   alias LinearSDK.Examples.LiveHelpers, as: Live
+  alias LinearSDK.Examples.SymphonyHelpers
 
   @page_size 50
 
   @query """
-  query SymphonyCandidateIssues($projectSlug: String!, $stateNames: [String!]!, $first: Int!, $after: String, $relationFirst: Int!) {
+  query SymphonyCandidateIssuesMe($projectSlug: String!, $stateNames: [String!]!, $first: Int!, $after: String) {
     issues(filter: {project: {slugId: {eq: $projectSlug}}, state: {name: {in: $stateNames}}}, first: $first, after: $after) {
       nodes {
         id
         identifier
         title
-        description
-        priority
-        branchName
-        url
-        createdAt
-        updatedAt
         state {
           name
         }
         assignee {
           id
         }
-        labels {
-          nodes {
-            name
-          }
-        }
-        inverseRelations(first: $relationFirst) {
-          nodes {
-            type
-            issue {
-              id
-              identifier
-              state {
-                name
-              }
-            }
-          }
-        }
+        url
       }
       pageInfo {
         hasNextPage
@@ -57,41 +36,19 @@ defmodule LinearSDK.Examples.SymphonyCandidateIssues do
   """
 
   @workspace_query """
-  query SymphonyCandidateIssuesWorkspace($stateNames: [String!]!, $first: Int!, $after: String, $relationFirst: Int!) {
+  query SymphonyCandidateIssuesMeWorkspace($stateNames: [String!]!, $first: Int!, $after: String) {
     issues(filter: {state: {name: {in: $stateNames}}}, first: $first, after: $after) {
       nodes {
         id
         identifier
         title
-        description
-        priority
-        branchName
-        url
-        createdAt
-        updatedAt
         state {
           name
         }
         assignee {
           id
         }
-        labels {
-          nodes {
-            name
-          }
-        }
-        inverseRelations(first: $relationFirst) {
-          nodes {
-            type
-            issue {
-              id
-              identifier
-              state {
-                name
-              }
-            }
-          }
-        }
+        url
       }
       pageInfo {
         hasNextPage
@@ -105,6 +62,8 @@ defmodule LinearSDK.Examples.SymphonyCandidateIssues do
   query SymphonyViewerAssignee {
     viewer {
       id
+      name
+      email
     }
   }
   """
@@ -113,21 +72,34 @@ defmodule LinearSDK.Examples.SymphonyCandidateIssues do
     client = Live.client!()
     {project_slug, project_source, discovered_project} = resolve_project_slug(client)
     state_names = Live.csv_env("LINEAR_ACTIVE_STATES", ["Todo", "In Progress"])
-    assignee_filter = Live.env("LINEAR_ASSIGNEE")
+    viewer = fetch_viewer!(client)
 
     issues =
       client
       |> fetch_all_pages!(project_slug, state_names)
-      |> filter_by_assignee(client, assignee_filter)
+      |> Enum.filter(&(get_in(&1, ["assignee", "id"]) == viewer["id"]))
 
-    Live.print("Symphony-style candidate issues", %{
+    Live.print("Symphony candidate issues for me", %{
+      viewer: %{
+        id: viewer["id"],
+        name: viewer["name"],
+        email: viewer["email"]
+      },
       project_slug: project_slug,
       project_slug_source: project_source,
       discovered_project: discovered_project,
       active_states: state_names,
-      assignee_filter: assignee_filter,
       count: length(issues),
-      issues: Enum.map(issues, &summarize_issue/1)
+      issues:
+        Enum.map(issues, fn issue ->
+          %{
+            id: issue["id"],
+            identifier: issue["identifier"],
+            title: issue["title"],
+            state: get_in(issue, ["state", "name"]),
+            url: issue["url"]
+          }
+        end)
     })
   end
 
@@ -163,6 +135,12 @@ defmodule LinearSDK.Examples.SymphonyCandidateIssues do
     end
   end
 
+  defp fetch_viewer!(%Client{} = client) do
+    client
+    |> Live.execute!(@viewer_query)
+    |> then(&get_in(&1.data, ["viewer"]))
+  end
+
   defp fetch_all_pages!(
          %Client{} = client,
          project_slug,
@@ -176,13 +154,11 @@ defmodule LinearSDK.Examples.SymphonyCandidateIssues do
       %{
         "stateNames" => state_names,
         "first" => @page_size,
-        "after" => after_cursor,
-        "relationFirst" => @page_size
+        "after" => after_cursor
       }
       |> maybe_put_project_slug(project_slug)
 
-    response =
-      Live.execute!(client, query, variables)
+    response = Live.execute!(client, query, variables)
 
     issues = get_in(response.data, ["issues", "nodes"]) || []
     page_info = get_in(response.data, ["issues", "pageInfo"]) || %{}
@@ -200,63 +176,6 @@ defmodule LinearSDK.Examples.SymphonyCandidateIssues do
   end
 
   defp maybe_put_project_slug(variables, _project_slug), do: variables
-
-  defp filter_by_assignee(issues, _client, nil), do: issues
-
-  defp filter_by_assignee(issues, %Client{} = client, "me") do
-    viewer_id =
-      client
-      |> Live.execute!(@viewer_query)
-      |> then(&get_in(&1.data, ["viewer", "id"]))
-
-    Enum.filter(issues, &(get_in(&1, ["assignee", "id"]) == viewer_id))
-  end
-
-  defp filter_by_assignee(issues, _client, assignee_id) do
-    Enum.filter(issues, &(get_in(&1, ["assignee", "id"]) == assignee_id))
-  end
-
-  defp summarize_issue(issue) do
-    %{
-      id: issue["id"],
-      identifier: issue["identifier"],
-      title: issue["title"],
-      priority: issue["priority"],
-      state: get_in(issue, ["state", "name"]),
-      assignee_id: get_in(issue, ["assignee", "id"]),
-      branch_name: issue["branchName"],
-      labels:
-        issue
-        |> get_in(["labels", "nodes"])
-        |> List.wrap()
-        |> Enum.map(& &1["name"])
-        |> Enum.reject(&is_nil/1),
-      blocked_by:
-        issue
-        |> get_in(["inverseRelations", "nodes"])
-        |> List.wrap()
-        |> Enum.flat_map(fn
-          %{"type" => type, "issue" => blocker} when is_binary(type) and is_map(blocker) ->
-            if String.downcase(type) == "blocks" do
-              [
-                %{
-                  id: blocker["id"],
-                  identifier: blocker["identifier"],
-                  state: get_in(blocker, ["state", "name"])
-                }
-              ]
-            else
-              []
-            end
-
-          _other ->
-            []
-        end),
-      url: issue["url"],
-      created_at: issue["createdAt"],
-      updated_at: issue["updatedAt"]
-    }
-  end
 end
 
-LinearSDK.Examples.SymphonyCandidateIssues.run()
+LinearSDK.Examples.SymphonyCandidateIssuesMe.run()

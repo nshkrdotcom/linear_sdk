@@ -32,6 +32,33 @@ The response is returned as `LinearSDK.Response`.
 When the GraphQL response contains errors, the failure is normalized into
 `LinearSDK.Error`.
 
+For documents that declare multiple operations, select the one you want
+explicitly:
+
+```elixir
+document = """
+query Viewer {
+  viewer {
+    id
+  }
+}
+
+mutation IssueArchive($id: String!) {
+  issueArchive(id: $id) {
+    success
+  }
+}
+"""
+
+{:ok, response} =
+  LinearSDK.execute_document(
+    client,
+    document,
+    %{},
+    operation_name: "Viewer"
+  )
+```
+
 Use the generated API reference modules in HexDocs to discover:
 
 - available root fields

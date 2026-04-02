@@ -12,13 +12,20 @@ Start by exporting a real Linear personal API key:
 export LINEAR_API_KEY=lin_api_...
 ```
 
-Run the full live suite:
+Run the full read-only suite:
 
 ```bash
-export LINEAR_PROJECT_SLUG=customer-portal-4f2a8c1d9e6b
-export LINEAR_ISSUE_REF=ENG-123
-export LINEAR_TARGET_STATE="In Progress"
-export LINEAR_COMMENT_BODY="Live test comment from LinearSDK examples"
+examples/run_all.sh
+```
+
+That script only requires `LINEAR_API_KEY`. It auto-discovers a project slug
+and issue when those values are not set. If your workspace has no accessible
+project slug yet, the candidate issue example falls back to a workspace-scoped
+query so the read-only suite still runs.
+
+If you also want the write examples:
+
+```bash
 export LINEAR_CONFIRM_WRITE=1
 examples/run_all.sh
 ```
@@ -31,8 +38,19 @@ Current user:
 mix run examples/viewer.exs
 ```
 
-Symphony-style candidate issue polling for one project slug and a set of active
-states:
+Symphony-style candidate issue polling:
+
+```bash
+mix run examples/symphony_candidate_issues.exs
+```
+
+Symphony-style candidate issue polling for the current viewer:
+
+```bash
+mix run examples/symphony_candidate_issues_me.exs
+```
+
+Optional project scoping and active-state override:
 
 ```bash
 export LINEAR_PROJECT_SLUG=customer-portal-4f2a8c1d9e6b
@@ -48,6 +66,26 @@ mix run examples/symphony_candidate_issues.exs
 ```
 
 Resolve an issue reference and a target workflow state:
+
+```bash
+mix run examples/symphony_state_lookup.exs
+```
+
+Fetch issue state snapshots by internal Linear issue IDs, matching Symphony's
+`issues(filter: {id: {in: ...}})` path:
+
+```bash
+mix run examples/symphony_issue_states_by_ids.exs
+```
+
+Resolve a workflow state ID using Symphony's exact filtered `team.states(...)`
+lookup query:
+
+```bash
+mix run examples/symphony_state_id_lookup.exs
+```
+
+Optional explicit issue and target state:
 
 ```bash
 export LINEAR_ISSUE_REF=ENG-123
@@ -76,6 +114,13 @@ Transition an issue to another workflow state:
 
 ```bash
 export LINEAR_ISSUE_REF=ENG-123
+mix run examples/symphony_transition_issue.exs
+```
+
+Optional explicit target state:
+
+```bash
+export LINEAR_ISSUE_REF=ENG-123
 export LINEAR_TARGET_STATE="In Progress"
 mix run examples/symphony_transition_issue.exs
 ```
@@ -85,31 +130,37 @@ mix run examples/symphony_transition_issue.exs
 - `LINEAR_API_KEY`
   - required for every example
 - `LINEAR_PROJECT_SLUG`
-  - required for `symphony_candidate_issues.exs`
+  - optional for examples; auto-discovered when omitted. Symphony's own tracker
+    config still requires a project slug
 - `LINEAR_ACTIVE_STATES`
   - optional comma-separated state names, defaults to `Todo,In Progress`
 - `LINEAR_ASSIGNEE`
-  - optional for candidate polling; use `me` or a Linear user ID
+  - optional for candidate polling; use `me` or a Linear user ID. The
+    dedicated `symphony_candidate_issues_me.exs` example needs no extra env
 - `LINEAR_ISSUE_REF`
-  - required for issue-specific examples; use an issue identifier like
-    `ENG-123` or a Linear issue UUID
+  - optional; auto-discovered when omitted. You can still set it explicitly to
+    use an issue identifier like `ENG-123` or a Linear issue UUID
 - `LINEAR_TARGET_STATE`
-  - required for state lookup and transition examples
+  - optional; state lookup defaults to the issue's current state, while the
+    transition example auto-picks a different workflow state when possible
 - `LINEAR_COMMENT_BODY`
-  - required for the comment example
+  - optional; defaults to a canned live test comment
 - `LINEAR_CONFIRM_WRITE`
-  - required for write examples; set to `1`
+  - optional; set to `1` only when you want the write examples included
 - `examples/run_all.sh`
-  - runs the full live suite in the recommended order and validates the full
-    env set up front
+  - runs the read-only suite with only `LINEAR_API_KEY`; add
+    `LINEAR_CONFIRM_WRITE=1` to include the write examples
 
 ## Recommended Order
 
 1. `mix run examples/viewer.exs`
 2. `mix run examples/symphony_candidate_issues.exs`
-3. `mix run examples/symphony_state_lookup.exs`
-4. `mix run examples/symphony_comment.exs`
-5. `mix run examples/symphony_transition_issue.exs`
+3. `mix run examples/symphony_candidate_issues_me.exs`
+4. `mix run examples/symphony_issue_states_by_ids.exs`
+5. `mix run examples/symphony_state_id_lookup.exs`
+6. `mix run examples/symphony_state_lookup.exs`
+7. `mix run examples/symphony_comment.exs`
+8. `mix run examples/symphony_transition_issue.exs`
 
 If you still need the onboarding steps inside Linear itself, read
 [`guides/real-linear-usage.md`](../guides/real-linear-usage.md).
