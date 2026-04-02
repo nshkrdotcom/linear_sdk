@@ -12,6 +12,17 @@ Start by exporting a real Linear personal API key:
 export LINEAR_API_KEY=lin_api_...
 ```
 
+Run the full live suite:
+
+```bash
+export LINEAR_PROJECT_SLUG=customer-portal-4f2a8c1d9e6b
+export LINEAR_ISSUE_REF=ENG-123
+export LINEAR_TARGET_STATE="In Progress"
+export LINEAR_COMMENT_BODY="Live test comment from LinearSDK examples"
+export LINEAR_CONFIRM_WRITE=1
+examples/run_all.sh
+```
+
 ## Read-Only Examples
 
 Current user:
@@ -88,6 +99,9 @@ mix run examples/symphony_transition_issue.exs
   - required for the comment example
 - `LINEAR_CONFIRM_WRITE`
   - required for write examples; set to `1`
+- `examples/run_all.sh`
+  - runs the full live suite in the recommended order and validates the full
+    env set up front
 
 ## Recommended Order
 
