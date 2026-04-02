@@ -36,7 +36,7 @@ defmodule LinearSDK.SourceCompatibilityTest do
 
     deps = probe_module.project()[:deps]
 
-    assert {:prismatic, "~> 0.1.1"} = find_dependency!(deps, :prismatic)
+    assert {:prismatic, "~> 0.2.0"} = find_dependency!(deps, :prismatic)
 
     assert {:prismatic_codegen, opts} = find_dependency!(deps, :prismatic_codegen)
     assert opts[:github] == "nshkrdotcom/prismatic"

@@ -96,18 +96,52 @@ LinearSDK.Client.new!(access_token: System.fetch_env!("LINEAR_OAUTH_ACCESS_TOKEN
 If you want the SDK to help with the provider-edge OAuth mechanics, use
 `LinearSDK.OAuth`.
 
-For most human-operated setups, prefer the task wrapper:
+Keep the model straight:
+
+- the OAuth app is the Linear-side app configuration
+- the app gives you `client_id`, `client_secret`, and redirect URIs
+- the OAuth access token is returned after authorization and is the credential
+  you actually send to GraphQL
+- for the generated GraphQL side of the app record itself, use
+  `mix run examples/oauth_application_info.exs`
+
+For most human-operated setups, prefer the example helper:
+
+```bash
+examples/run_all.sh --setup-oauth
+examples/run_all.sh --oauth
+examples/run_all.sh
+```
+
+That helper expands to:
 
 ```bash
 export LINEAR_OAUTH_CLIENT_ID="..."
 export LINEAR_OAUTH_CLIENT_SECRET="..."
 export LINEAR_OAUTH_REDIRECT_URI="http://127.0.0.1:40071/callback"
-mix linear.oauth --save --manual --no-browser --scope read --scope write
+mix linear.oauth --save --manual --no-browser
 ```
 
 If you have a literal loopback redirect URI and the optional callback-listener
 dependencies are installed, `mix linear.oauth` can also capture the callback
 directly. Otherwise it falls back to the same manual paste-back flow.
+
+For mutation examples, use:
+
+```bash
+examples/run_all.sh --setup-oauth-write
+examples/run_all.sh --oauth-write
+examples/run_all.sh --with-write
+```
+
+If you want direct OAuth examples instead of the helper wrapper, use:
+
+```bash
+mix run examples/oauth_authorize_url.exs
+mix run examples/oauth_exchange_code.exs
+mix run examples/oauth_saved_token_viewer.exs
+mix run examples/oauth_refresh_and_viewer.exs
+```
 
 ## Step 1B: Use OAuth When You Need App-Oriented Auth
 
@@ -293,6 +327,18 @@ These examples are safe and read-only.
 
 ## Step 5: Run The Write Examples On A Disposable Test Issue
 
+For the full example suite with writes enabled, prefer:
+
+```bash
+examples/run_all.sh --with-write
+```
+
+Low-level equivalent:
+
+```bash
+export LINEAR_CONFIRM_WRITE=1
+```
+
 Comment on an issue:
 
 ```bash
@@ -332,6 +378,7 @@ Those scripts perform real mutations against Linear.
 5. Inspect the resolved issue and state with
    `mix run examples/symphony_state_lookup.exs`.
 6. Only after that, try the comment and transition examples with
+   `examples/run_all.sh --with-write` or the low-level
    `LINEAR_CONFIRM_WRITE=1`.
 
 ## Auth Reference

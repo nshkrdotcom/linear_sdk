@@ -5,7 +5,7 @@ Add the dependency:
 ```elixir
 def deps do
   [
-    {:linear_sdk, "~> 0.1.1"}
+    {:linear_sdk, "~> 0.2.0"}
   ]
 end
 ```
@@ -44,15 +44,37 @@ client =
 To create that file interactively:
 
 ```bash
+examples/run_all.sh --setup-oauth
+examples/run_all.sh --oauth
+```
+
+The helper expands to:
+
+```bash
 export LINEAR_OAUTH_CLIENT_ID="..."
 export LINEAR_OAUTH_CLIENT_SECRET="..."
 export LINEAR_OAUTH_REDIRECT_URI="http://127.0.0.1:40071/callback"
-mix linear.oauth --save --manual --no-browser --scope read --scope write
+mix linear.oauth --save --manual --no-browser
 ```
 
 For literal loopback redirect URIs, `mix linear.oauth` can also auto-capture
 the callback when the optional callback-listener dependencies are available.
 Otherwise it falls back to the same paste-back flow.
+
+If you want a write-capable token for mutation examples, use:
+
+```bash
+examples/run_all.sh --setup-oauth-write
+examples/run_all.sh --oauth-write
+```
+
+If you want direct OAuth example scripts instead of the helper wrapper, use:
+
+```bash
+mix run examples/oauth_authorize_url.exs
+mix run examples/oauth_exchange_code.exs
+mix run examples/oauth_saved_token_viewer.exs
+```
 
 Execute a GraphQL document:
 

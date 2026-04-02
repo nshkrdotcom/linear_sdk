@@ -67,46 +67,41 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
     end
   end
 
+  defmodule FakeSystem do
+    def get_env(name) do
+      Process.get(:linear_oauth_task_env, %{})
+      |> Map.get(name)
+    end
+
+    def user_home! do
+      Process.get(:linear_oauth_task_user_home, "/fake-home")
+    end
+  end
+
   setup do
     previous_shell = Mix.shell()
     Mix.shell(Mix.Shell.Process)
     Mix.Task.reenable("linear.oauth")
     Process.put(:linear_oauth_task_test_pid, self())
-    Application.put_env(:linear_sdk, :oauth_interactive_module, FakeInteractive)
-    Application.put_env(:linear_sdk, :oauth_module, FakeOAuth)
-    Application.put_env(:linear_sdk, :oauth2_module, FakeOAuth2)
-
-    env_backup =
-      Enum.map(
-        [
-          "LINEAR_OAUTH_CLIENT_ID",
-          "LINEAR_OAUTH_CLIENT_SECRET",
-          "LINEAR_OAUTH_REDIRECT_URI",
-          "LINEAR_OAUTH_TOKEN_PATH",
-          "XDG_CONFIG_HOME"
-        ],
-        &{&1, System.get_env(&1)}
-      )
+    Process.put(:linear_sdk_oauth_interactive_module, FakeInteractive)
+    Process.put(:linear_sdk_oauth_module, FakeOAuth)
+    Process.put(:linear_sdk_oauth2_module, FakeOAuth2)
+    Process.put(:linear_sdk_system_module, FakeSystem)
+    Process.put(:linear_oauth_task_env, default_env())
 
     on_exit(fn ->
-      Enum.each(env_backup, fn
-        {key, nil} -> System.delete_env(key)
-        {key, value} -> System.put_env(key, value)
-      end)
-
-      Application.delete_env(:linear_sdk, :oauth_interactive_module)
-      Application.delete_env(:linear_sdk, :oauth_module)
-      Application.delete_env(:linear_sdk, :oauth2_module)
+      Process.delete(:linear_sdk_oauth_interactive_module)
+      Process.delete(:linear_sdk_oauth_module)
+      Process.delete(:linear_sdk_oauth2_module)
+      Process.delete(:linear_sdk_system_module)
+      Process.delete(:linear_oauth_task_env)
+      Process.delete(:linear_oauth_task_user_home)
       Process.delete(:linear_oauth_task_result)
       Process.delete(:linear_oauth_client_credentials_result)
       Process.delete(:linear_oauth_refresh_result)
       Process.delete(:linear_oauth_task_test_pid)
       Mix.shell(previous_shell)
     end)
-
-    System.put_env("LINEAR_OAUTH_CLIENT_ID", "client-id")
-    System.put_env("LINEAR_OAUTH_CLIENT_SECRET", "client-secret")
-    System.put_env("LINEAR_OAUTH_REDIRECT_URI", "http://127.0.0.1:40071/callback")
 
     :ok
   end
@@ -160,7 +155,7 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
   end
 
   test "saves tokens to the default XDG path when requested", %{tmp_dir: tmp_dir} do
-    System.put_env("XDG_CONFIG_HOME", tmp_dir)
+    put_fake_env("XDG_CONFIG_HOME", tmp_dir)
 
     OAuthTask.run(["--save"])
 
@@ -184,7 +179,7 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
     tmp_dir: tmp_dir
   } do
     path = Path.join(tmp_dir, "env-linear-token.json")
-    System.put_env("LINEAR_OAUTH_TOKEN_PATH", path)
+    put_fake_env("LINEAR_OAUTH_TOKEN_PATH", path)
 
     OAuthTask.run(["--save"])
 
@@ -250,5 +245,20 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
     assert_receive {:mix_shell, :info, ["app_access"]}
     assert_receive {:mix_shell, :info, ["Export commands:"]}
     assert_receive {:mix_shell, :info, ["export LINEAR_OAUTH_ACCESS_TOKEN=\"app_access\""]}
+  end
+
+  defp default_env do
+    %{
+      "LINEAR_OAUTH_CLIENT_ID" => "client-id",
+      "LINEAR_OAUTH_CLIENT_SECRET" => "client-secret",
+      "LINEAR_OAUTH_REDIRECT_URI" => "http://127.0.0.1:40071/callback"
+    }
+  end
+
+  defp put_fake_env(name, value) do
+    Process.put(
+      :linear_oauth_task_env,
+      Map.put(Process.get(:linear_oauth_task_env, default_env()), name, value)
+    )
   end
 end

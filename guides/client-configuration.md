@@ -10,6 +10,13 @@ Defaults:
 
 ## Auth Shortcuts
 
+Keep the auth pieces separate:
+
+- `api_key:` is a personal API key created in Linear settings
+- `access_token:` is an OAuth access token returned by a completed OAuth flow
+- the OAuth app itself only gives you `client_id`, `client_secret`, and
+  redirect URIs; it is not a GraphQL credential by itself
+
 Personal API key from Linear settings:
 
 ```elixir

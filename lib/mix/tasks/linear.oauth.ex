@@ -8,6 +8,10 @@ defmodule Mix.Tasks.Linear.Oauth do
       export LINEAR_OAUTH_CLIENT_ID="..."
       export LINEAR_OAUTH_CLIENT_SECRET="..."
       export LINEAR_OAUTH_REDIRECT_URI="http://127.0.0.1:40071/callback"
+      mix linear.oauth --save --manual --no-browser
+
+  Add explicit scopes only when you need more than the default read token:
+
       mix linear.oauth --save --manual --no-browser --scope read --scope write
 
   ## Usage
@@ -174,19 +178,22 @@ defmodule Mix.Tasks.Linear.Oauth do
   end
 
   defp interactive_module do
-    Application.get_env(
-      :linear_sdk,
-      :oauth_interactive_module,
-      Module.concat([Prismatic, OAuth2, Interactive])
-    )
+    Process.get(:linear_sdk_oauth_interactive_module) ||
+      Application.get_env(
+        :linear_sdk,
+        :oauth_interactive_module,
+        Module.concat([Prismatic, OAuth2, Interactive])
+      )
   end
 
   defp oauth_module do
-    Application.get_env(:linear_sdk, :oauth_module, LinearSDK.OAuth)
+    Process.get(:linear_sdk_oauth_module) ||
+      Application.get_env(:linear_sdk, :oauth_module, LinearSDK.OAuth)
   end
 
   defp oauth2_module do
-    Application.get_env(:linear_sdk, :oauth2_module, Prismatic.OAuth2)
+    Process.get(:linear_sdk_oauth2_module) ||
+      Application.get_env(:linear_sdk, :oauth2_module, Prismatic.OAuth2)
   end
 
   defp saved_token_module do
@@ -194,14 +201,14 @@ defmodule Mix.Tasks.Linear.Oauth do
   end
 
   defp fetch_env!(name) do
-    case System.get_env(name) do
+    case system_module().get_env(name) do
       value when is_binary(value) and value != "" -> value
       _other -> Mix.raise("missing required environment variable #{name}")
     end
   end
 
   defp optional_env(name) do
-    case System.get_env(name) do
+    case system_module().get_env(name) do
       value when is_binary(value) and value != "" -> value
       _other -> nil
     end
@@ -283,6 +290,11 @@ defmodule Mix.Tasks.Linear.Oauth do
 
   defp token_source_module do
     Module.concat([Prismatic, Adapters, TokenSource, File])
+  end
+
+  defp system_module do
+    Process.get(:linear_sdk_system_module) ||
+      Application.get_env(:linear_sdk, :system_module, LinearSDK.System)
   end
 
   defp actor_params(nil), do: []

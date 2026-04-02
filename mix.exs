@@ -5,7 +5,7 @@ defmodule LinearSDK.MixProject do
 
   alias LinearSDK.Build.DependencyResolver
 
-  @version "0.1.1"
+  @version "0.2.0"
   @source_url "https://github.com/nshkrdotcom/linear_sdk"
 
   def project do
@@ -60,7 +60,7 @@ defmodule LinearSDK.MixProject do
 
   defp prismatic_runtime_dep do
     if use_hex_runtime_dep?() do
-      {:prismatic, "~> 0.1.1"}
+      {:prismatic, "~> 0.2.0"}
     else
       {:prismatic, path: "../prismatic/apps/prismatic_runtime"}
     end

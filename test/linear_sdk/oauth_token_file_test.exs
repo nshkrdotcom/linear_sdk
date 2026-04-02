@@ -1,21 +1,42 @@
 defmodule LinearSDK.OAuthTokenFileTest do
   use ExUnit.Case, async: true
 
-  test "builds the default XDG token path" do
-    original = System.get_env("XDG_CONFIG_HOME")
+  defmodule FakeSystem do
+    def get_env(name) do
+      Process.get(:linear_sdk_test_env, %{})
+      |> Map.get(name)
+    end
+
+    def user_home! do
+      Process.get(:linear_sdk_test_user_home, "/fake-home")
+    end
+  end
+
+  setup do
+    Process.put(:linear_sdk_system_module, FakeSystem)
 
     on_exit(fn ->
-      if original do
-        System.put_env("XDG_CONFIG_HOME", original)
-      else
-        System.delete_env("XDG_CONFIG_HOME")
-      end
+      Process.delete(:linear_sdk_system_module)
+      Process.delete(:linear_sdk_test_env)
+      Process.delete(:linear_sdk_test_user_home)
     end)
 
-    System.put_env("XDG_CONFIG_HOME", "/tmp/linear-xdg")
+    :ok
+  end
+
+  test "builds the default XDG token path" do
+    Process.put(:linear_sdk_test_env, %{"XDG_CONFIG_HOME" => "/tmp/linear-xdg"})
 
     assert LinearSDK.OAuthTokenFile.default_path() ==
              "/tmp/linear-xdg/linear_sdk/oauth/linear.json"
+  end
+
+  test "falls back to ~/.config when XDG_CONFIG_HOME is unset" do
+    Process.put(:linear_sdk_test_env, %{})
+    Process.put(:linear_sdk_test_user_home, "/tmp/fake-home")
+
+    assert LinearSDK.OAuthTokenFile.default_path() ==
+             "/tmp/fake-home/.config/linear_sdk/oauth/linear.json"
   end
 
   test "resolves explicit env paths" do
