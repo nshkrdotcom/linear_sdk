@@ -6,23 +6,45 @@ Linear-specific.
 Defaults:
 
 - base URL: `https://api.linear.app/graphql`
-- auth: no default token is injected unless you provide one
+- no token is injected unless you provide one
 
-Example:
+## Auth Shortcuts
+
+Personal API key from Linear settings:
 
 ```elixir
 client =
   LinearSDK.Client.new!(
-    auth: {:bearer, System.fetch_env!("LINEAR_API_KEY")}
+    api_key: System.fetch_env!("LINEAR_API_KEY")
   )
 ```
+
+OAuth access token from your own OAuth flow:
+
+```elixir
+client =
+  LinearSDK.Client.new!(
+    access_token: System.fetch_env!("LINEAR_OAUTH_ACCESS_TOKEN")
+  )
+```
+
+If you need full control, you can still pass raw runtime auth:
+
+```elixir
+client =
+  LinearSDK.Client.new!(
+    auth: {:header, "Authorization", System.fetch_env!("LINEAR_API_KEY")}
+  )
+```
+
+## Transport Overrides
 
 You can override the transport for tests:
 
 ```elixir
 client =
   LinearSDK.Client.new!(
-    auth: {:bearer, "token"},
+    api_key: "token",
     transport: LinearSDK.TransportMock
   )
 ```

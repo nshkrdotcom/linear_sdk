@@ -10,12 +10,21 @@ def deps do
 end
 ```
 
-Create a client:
+Create a client with a personal API key:
 
 ```elixir
 client =
   LinearSDK.Client.new!(
-    auth: {:bearer, System.fetch_env!("LINEAR_API_KEY")}
+    api_key: System.fetch_env!("LINEAR_API_KEY")
+  )
+```
+
+Or create a client with an OAuth access token:
+
+```elixir
+client =
+  LinearSDK.Client.new!(
+    access_token: System.fetch_env!("LINEAR_OAUTH_ACCESS_TOKEN")
   )
 ```
 
@@ -35,6 +44,9 @@ Execute a GraphQL document:
     """
   )
 ```
+
+If you still need to create your Linear personal API key or find your project
+slug, start with [real-linear-usage.md](real-linear-usage.md).
 
 Use the generated API reference modules in HexDocs to discover:
 

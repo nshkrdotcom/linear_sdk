@@ -131,7 +131,7 @@ defmodule LinearSDK.MixProject do
     ["README.md"] ++
       user_guides() ++
       [
-        "examples/examples.md",
+        "examples/README.md",
         "CHANGELOG.md",
         "LICENSE"
       ]
@@ -141,7 +141,7 @@ defmodule LinearSDK.MixProject do
     [
       {"Overview", ["README.md"]},
       {"User Guides", user_guides()},
-      {"Examples", ["examples/examples.md"]},
+      {"Examples", ["examples/README.md"]},
       {"Project", ["CHANGELOG.md", "LICENSE"]}
     ]
   end
@@ -150,6 +150,7 @@ defmodule LinearSDK.MixProject do
     [
       "guides/getting-started.md",
       "guides/client-configuration.md",
+      "guides/real-linear-usage.md",
       "guides/executing-graphql-documents.md",
       "guides/generation-and-verification.md",
       "guides/upstream-artifacts.md"

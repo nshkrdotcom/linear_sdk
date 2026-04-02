@@ -5,6 +5,8 @@ defmodule LinearSDK.Client do
   The public contract is provider-local:
 
   - `new/1` and `new!/1` create a `LinearSDK.Client`
+  - `api_key:` configures a Linear personal API key
+  - `access_token:` configures an OAuth access token
   - `execute_document/4` executes an ad hoc GraphQL document
   - successful responses are returned as `LinearSDK.Response`
   - failures are returned as `LinearSDK.Error`
@@ -24,11 +26,13 @@ defmodule LinearSDK.Client do
 
   @spec new(keyword()) :: {:ok, t()} | {:error, Exception.t()}
   def new(opts \\ []) do
-    opts
-    |> Keyword.put_new(:base_url, @default_base_url)
-    |> Prismatic.Client.new()
-    |> case do
-      {:ok, runtime} -> {:ok, %__MODULE__{runtime: runtime}}
+    with {:ok, normalized_opts} <- normalize_provider_auth(opts),
+         {:ok, runtime} <-
+           normalized_opts
+           |> Keyword.put_new(:base_url, @default_base_url)
+           |> Prismatic.Client.new() do
+      {:ok, %__MODULE__{runtime: runtime}}
+    else
       {:error, reason} -> {:error, reason}
     end
   end
@@ -62,5 +66,57 @@ defmodule LinearSDK.Client do
 
   defp wrap_result({:error, %Prismatic.Error{} = error}) do
     {:error, LinearSDK.Error.from_prismatic(error)}
+  end
+
+  defp normalize_provider_auth(opts) when is_list(opts) do
+    has_explicit_auth? = Keyword.has_key?(opts, :auth)
+    has_api_key? = Keyword.has_key?(opts, :api_key)
+    has_access_token? = Keyword.has_key?(opts, :access_token)
+
+    cond do
+      has_explicit_auth? and (has_api_key? or has_access_token?) ->
+        {:error,
+         ArgumentError.exception(
+           "pass either :auth or provider shortcuts (:api_key / :access_token), not both"
+         )}
+
+      has_api_key? and has_access_token? ->
+        {:error, ArgumentError.exception("pass either :api_key or :access_token, not both")}
+
+      has_api_key? ->
+        with {:ok, api_key} <- normalize_secret_option(opts, :api_key) do
+          {:ok,
+           opts
+           |> Keyword.delete(:api_key)
+           |> Keyword.put(:auth, {:header, "Authorization", api_key})}
+        end
+
+      has_access_token? ->
+        with {:ok, access_token} <- normalize_secret_option(opts, :access_token) do
+          {:ok,
+           opts
+           |> Keyword.delete(:access_token)
+           |> Keyword.put(:auth, {:bearer, access_token})}
+        end
+
+      true ->
+        {:ok, opts}
+    end
+  end
+
+  defp normalize_secret_option(opts, key) do
+    case Keyword.fetch!(opts, key) do
+      value when is_binary(value) ->
+        case String.trim(value) do
+          "" ->
+            {:error, ArgumentError.exception("#{inspect(key)} must not be blank")}
+
+          trimmed ->
+            {:ok, trimmed}
+        end
+
+      _other ->
+        {:error, ArgumentError.exception("#{inspect(key)} must be a string")}
+    end
   end
 end

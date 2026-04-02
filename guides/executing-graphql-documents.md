@@ -9,7 +9,7 @@ subscriptions:
 ```elixir
 client =
   LinearSDK.Client.new!(
-    auth: {:bearer, System.fetch_env!("LINEAR_API_KEY")}
+    api_key: System.fetch_env!("LINEAR_API_KEY")
   )
 
 {:ok, response} =

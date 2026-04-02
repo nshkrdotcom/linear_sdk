@@ -23,7 +23,8 @@ The repo is intentionally thin:
 
 ## What this repo owns
 
-- Linear-specific base URL and auth defaults
+- Linear-specific base URL defaults
+- provider-local auth shortcuts for personal API keys and OAuth access tokens
 - committed upstream schema artifacts
 - full generated API reference docs for the upstream graph
 - a small curated document set used for internal generation coverage
@@ -39,12 +40,43 @@ def deps do
 end
 ```
 
-## Create a client and execute a document
+## Real Linear Onboarding
+
+The current upstream `linear/linear` repo and Linear's live docs both point to
+the same operating model:
+
+- personal API keys are created in Linear under `Settings -> Security & access -> Personal API keys`
+- OAuth is supported, but the app registration and token exchange flow are your
+  responsibility
+- SDKs expect you to bring a token; they do not acquire, store, rotate, or
+  refresh credentials for you
+
+`LinearSDK` makes those two auth modes explicit:
+
+```elixir
+# Personal API key from Linear settings
+client =
+  LinearSDK.Client.new!(
+    api_key: System.fetch_env!("LINEAR_API_KEY")
+  )
+
+# OAuth access token that you obtained elsewhere
+oauth_client =
+  LinearSDK.Client.new!(
+    access_token: System.fetch_env!("LINEAR_OAUTH_ACCESS_TOKEN")
+  )
+```
+
+For a step-by-step setup walkthrough, including how to find your project slug,
+issue reference, and target workflow states, see
+[guides/real-linear-usage.md](guides/real-linear-usage.md).
+
+## First Live Query
 
 ```elixir
 client =
   LinearSDK.Client.new!(
-    auth: {:bearer, System.fetch_env!("LINEAR_API_KEY")}
+    api_key: System.fetch_env!("LINEAR_API_KEY")
   )
 
 {:ok, response} =
@@ -62,14 +94,38 @@ client =
   )
 ```
 
-## Docs map
+## Live Examples
 
-- [Getting Started](guides/getting-started.md): install, client creation, and first document execution
-- [Client Configuration](guides/client-configuration.md): base URL, auth, transport overrides, and telemetry
-- [Executing GraphQL Documents](guides/executing-graphql-documents.md): ad hoc GraphQL document execution against the Linear API
-- [Generation and Verification](guides/generation-and-verification.md): local generation and freshness checks
-- [Upstream Artifacts](guides/upstream-artifacts.md): copied schema inputs, curated documents, and official reference manifests
-- [Examples](examples/examples.md): small runnable snippets and task reminders
+All example scripts under `examples/` are real Linear connections only. They do
+not use mocks or fake transports.
+
+```bash
+export LINEAR_API_KEY=lin_api_...
+mix run examples/viewer.exs
+mix run examples/symphony_candidate_issues.exs
+mix run examples/symphony_state_lookup.exs
+```
+
+Mutation examples are available too, but they intentionally require
+`LINEAR_CONFIRM_WRITE=1` before they will comment on or transition a real issue.
+See [examples/README.md](examples/README.md) for the full list.
+
+## Docs Map
+
+- [Getting Started](guides/getting-started.md): install, client creation, and
+  first document execution
+- [Client Configuration](guides/client-configuration.md): base URL, auth modes,
+  transport overrides, and telemetry
+- [Real Linear Usage](guides/real-linear-usage.md): user-friendly onboarding
+  for personal API keys, OAuth notes, and Symphony-oriented workflows
+- [Executing GraphQL Documents](guides/executing-graphql-documents.md): ad hoc
+  GraphQL document execution against the Linear API
+- [Generation and Verification](guides/generation-and-verification.md): local
+  generation and freshness checks
+- [Upstream Artifacts](guides/upstream-artifacts.md): copied schema inputs,
+  curated documents, and official reference manifests
+- [Examples](examples/README.md): runnable live examples for common Linear and
+  Symphony-style flows
 
 API reference is published under the `Modules` tab in HexDocs:
 
@@ -83,7 +139,7 @@ API reference is published under the `Modules` tab in HexDocs:
 - `LinearSDK.Enums`
 - `LinearSDK.Scalars`
 
-## Generation tasks
+## Generation Tasks
 
 ```bash
 mix linear.ir
@@ -96,7 +152,7 @@ Generation consumes the committed upstream schema files:
 - `priv/upstream/schema/schema.json`
 - `priv/upstream/schema/schema.graphql`
 
-## Quality bar
+## Quality Bar
 
 ```bash
 mix ci
