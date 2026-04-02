@@ -4,6 +4,8 @@ defmodule LinearSDK.ClientTest do
   import Mox
 
   alias LinearSDK.Client
+  alias LinearSDK.Error
+  alias LinearSDK.Response
 
   setup :verify_on_exit!
 
@@ -14,13 +16,14 @@ defmodule LinearSDK.ClientTest do
         transport: LinearSDK.TransportMock
       )
 
-    assert client.context.base_url == "https://api.linear.app/graphql"
+    assert %Client{} = client
+    assert client.runtime.context.base_url == "https://api.linear.app/graphql"
   end
 
-  test "delegates execution through Prismatic with the configured transport" do
+  test "executes a document through the configured transport and returns a provider response" do
     expect(LinearSDK.TransportMock, :execute, fn context, payload, _opts ->
       assert context.base_url == "https://api.linear.app/graphql"
-      assert payload["operationName"] == "Viewer"
+      assert payload["operationName"] == "AdHocQuery"
 
       {:ok,
        %{
@@ -36,16 +39,27 @@ defmodule LinearSDK.ClientTest do
         transport: LinearSDK.TransportMock
       )
 
-    operation =
-      Prismatic.Operation.new!(
-        id: "viewer",
-        name: "Viewer",
-        kind: :query,
-        document: "query Viewer { viewer { id } }",
-        root_field: "viewer"
+    assert {:ok, %Response{request_id: "linear-1", data: %{"viewer" => %{"id" => "u1"}}}} =
+             Client.execute_document(client, "query Viewer { viewer { id } }")
+  end
+
+  test "normalizes GraphQL failures into a provider error" do
+    expect(LinearSDK.TransportMock, :execute, fn _context, _payload, _opts ->
+      {:ok,
+       %{
+         status: 200,
+         headers: [{"x-request-id", "linear-2"}],
+         body: %{"errors" => [%{"message" => "No access"}]}
+       }}
+    end)
+
+    client =
+      Client.new!(
+        auth: {:bearer, "secret"},
+        transport: LinearSDK.TransportMock
       )
 
-    assert {:ok, %Prismatic.Response{request_id: "linear-1"}} =
-             Client.execute_operation(client, operation)
+    assert {:error, %Error{type: :graphql, request_id: "linear-2", message: "No access"}} =
+             Client.execute_document(client, "query Viewer { viewer { id } }")
   end
 end

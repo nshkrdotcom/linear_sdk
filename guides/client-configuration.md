@@ -1,6 +1,7 @@
 # Client Configuration
 
-`LinearSDK.Client` is a thin wrapper around `Prismatic.Client`.
+`LinearSDK.Client` keeps the public configuration surface small and
+Linear-specific.
 
 Defaults:
 
@@ -25,3 +26,6 @@ client =
     transport: LinearSDK.TransportMock
   )
 ```
+
+For ad hoc execution, use `LinearSDK.execute_document/4` or
+`LinearSDK.Client.execute_document/4`.

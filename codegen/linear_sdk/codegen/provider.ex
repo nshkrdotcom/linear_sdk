@@ -11,13 +11,14 @@ defmodule LinearSDK.Codegen.Provider do
       base_url: "https://api.linear.app/graphql",
       auth: %{type: :bearer},
       source: [
-        introspection_path: Path.join(@root, "priv/upstream/schema/introspection.json"),
+        introspection_path: Path.join(@root, "priv/upstream/schema/schema.json"),
+        schema_sdl_path: Path.join(@root, "priv/upstream/schema/schema.graphql"),
         documents_root: Path.join(@root, "priv/upstream/documents")
       ],
       output: [
         root: @root,
         lib_root: "lib/linear_sdk/generated",
-        docs_path: "guides/generated-surface.md"
+        docs_root: "guides/api"
       ]
     )
   end

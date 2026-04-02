@@ -16,10 +16,17 @@ The provider definition lives in:
 
 Generation inputs:
 
-- `priv/upstream/schema/introspection.json`
+- `priv/upstream/schema/schema.json`
+- `priv/upstream/schema/schema.graphql`
 - `priv/upstream/documents/*.graphql`
 
 Generated outputs:
 
 - `lib/linear_sdk/generated/*.ex`
-- `guides/generated-surface.md`
+- `guides/api/**/*.md`
+
+The generated `guides/api/` tree is the full public schema reference used by
+HexDocs.
+
+The generated modules under `lib/linear_sdk/generated/` are internal support
+artifacts and are not the primary user-facing documentation surface.

@@ -10,31 +10,24 @@
 
 # LinearSDK
 
-`LinearSDK` is an Elixir SDK for Linear built on top of `prismatic`.
+`LinearSDK` is an Elixir SDK for Linear with a thin provider-facing client and
+a generated full-schema API reference.
 
 The repo is intentionally thin:
 
-- committed upstream artifacts live in `priv/upstream/`
+- committed upstream schema and reference artifacts live in `priv/upstream/`
 - provider configuration lives in `codegen/`
-- generated modules live in `lib/linear_sdk/generated/`
-- handwritten code stays focused on runtime defaults and ergonomics
+- provider-facing handwritten code stays focused on Linear defaults and
+  ergonomics
+- generated internal support code and API reference docs are committed source
 
 ## What this repo owns
 
 - Linear-specific base URL and auth defaults
-- curated GraphQL documents for the supported surface
-- committed introspection and upstream-reference artifacts
-- generated operations, models, enums, and docs
+- committed upstream schema artifacts
+- full generated API reference docs for the upstream graph
+- a small curated document set used for internal generation coverage
 - local generation and verification tasks
-
-## What this repo does not own
-
-- generic GraphQL-over-HTTP execution
-- generic transport and response normalization
-- generic provider code generation
-- generic artifact freshness logic
-
-Those concerns stay in `prismatic`.
 
 ## Install
 
@@ -46,38 +39,38 @@ def deps do
 end
 ```
 
-## Create a client
+## Create a client and execute a document
 
 ```elixir
 client =
   LinearSDK.Client.new!(
     auth: {:bearer, System.fetch_env!("LINEAR_API_KEY")}
   )
-```
 
-## Execute a generated operation
-
-```elixir
 {:ok, response} =
-  LinearSDK.Generated.Operations.Viewer.call(client)
-```
-
-For a typed root object:
-
-```elixir
-{:ok, typed_response} =
-  LinearSDK.Generated.Operations.Viewer.call_typed(client)
+  LinearSDK.execute_document(
+    client,
+    """
+    query Viewer {
+      viewer {
+        id
+        name
+        email
+      }
+    }
+    """
+  )
 ```
 
 ## Docs map
 
-- [Getting Started](guides/getting-started.md): install, client creation, and first operation
+- [Getting Started](guides/getting-started.md): install, client creation, and first document execution
 - [Client Configuration](guides/client-configuration.md): base URL, auth, transport overrides, and telemetry
-- [Using Generated Operations](guides/using-generated-operations.md): operation modules, typed responses, and models
+- [Executing GraphQL Documents](guides/executing-graphql-documents.md): ad hoc GraphQL document execution against the Linear API
 - [Generation and Verification](guides/generation-and-verification.md): local generation and freshness checks
-- [Upstream Artifacts](guides/upstream-artifacts.md): introspection, curated documents, and copied official reference manifests
-- [Generated Surface](guides/generated-surface.md): generated operation/model/enum inventory
-- [Examples](examples/README.md): small runnable snippets and task reminders
+- [Upstream Artifacts](guides/upstream-artifacts.md): copied schema inputs, curated documents, and official reference manifests
+- [API Reference](guides/api/graph-reference.md): generated full-schema reference for queries, mutations, subscriptions, types, inputs, enums, unions, interfaces, and scalars
+- [Examples](examples/examples.md): small runnable snippets and task reminders
 
 ## Generation tasks
 
@@ -86,6 +79,11 @@ mix linear.ir
 mix linear.generate
 mix linear.verify
 ```
+
+Generation consumes the committed upstream schema files:
+
+- `priv/upstream/schema/schema.json`
+- `priv/upstream/schema/schema.graphql`
 
 ## Quality bar
 

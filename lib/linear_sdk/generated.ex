@@ -1,11 +1,9 @@
 defmodule LinearSDK.Generated do
-  @moduledoc """
-  Inventory of generated operations, models, and enums for this provider SDK.
-  """
+  @moduledoc false
 
   @operations [LinearSDK.Generated.Operations.Viewer]
   @models [LinearSDK.Generated.Models.User]
-  @enums [LinearSDK.Generated.Enums.IssuePriority]
+  @enums []
 
   def operations, do: @operations
   def models, do: @models

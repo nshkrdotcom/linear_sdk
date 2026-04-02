@@ -1,0 +1,34 @@
+<!-- Generated file. Do not edit by hand. -->
+
+# UserCollectionFilter
+
+User filtering options.
+
+## Summary
+
+- Kind: `input_object`
+
+
+## Input Fields
+
+| Name | Type | Default | Deprecated | Description |
+| --- | --- | --- | --- | --- |
+| `active` | [`BooleanComparator`](boolean_comparator-input.md) | `n/a` | No | Comparator for the user's activity status. |
+| `admin` | [`BooleanComparator`](boolean_comparator-input.md) | `n/a` | No | Comparator for the user's admin status. |
+| `and` | [[`UserCollectionFilter`](user_collection_filter-input.md)!] | `n/a` | No | Compound filters, all of which need to be matched by the user. |
+| `app` | [`BooleanComparator`](boolean_comparator-input.md) | `n/a` | No | Comparator for the user's app status. |
+| `assignedIssues` | [`IssueCollectionFilter`](issue_collection_filter-input.md) | `n/a` | No | Filters that the users assigned issues must satisfy. |
+| `createdAt` | [`DateComparator`](date_comparator-input.md) | `n/a` | No | Comparator for the created at date. |
+| `displayName` | [`StringComparator`](string_comparator-input.md) | `n/a` | No | Comparator for the user's display name. |
+| `email` | [`StringComparator`](string_comparator-input.md) | `n/a` | No | Comparator for the user's email. |
+| `every` | [`UserFilter`](user_filter-input.md) | `n/a` | No | Filters that needs to be matched by all users. |
+| `id` | [`IDComparator`](id_comparator-input.md) | `n/a` | No | Comparator for the identifier. |
+| `invited` | [`BooleanComparator`](boolean_comparator-input.md) | `n/a` | No | Comparator for the user's invited status. |
+| `isInvited` | [`BooleanComparator`](boolean_comparator-input.md) | `n/a` | No | Comparator for the user's invited status. |
+| `isMe` | [`BooleanComparator`](boolean_comparator-input.md) | `n/a` | No | Filter based on the currently authenticated user. Set to true to filter for the authenticated user, false for any other user. |
+| `length` | [`NumberComparator`](number_comparator-input.md) | `n/a` | No | Comparator for the collection length. |
+| `name` | [`StringComparator`](string_comparator-input.md) | `n/a` | No | Comparator for the user's name. |
+| `or` | [[`UserCollectionFilter`](user_collection_filter-input.md)!] | `n/a` | No | Compound filters, one of which need to be matched by the user. |
+| `owner` | [`BooleanComparator`](boolean_comparator-input.md) | `n/a` | No | Comparator for the user's owner status. |
+| `some` | [`UserFilter`](user_filter-input.md) | `n/a` | No | Filters that needs to be matched by some users. |
+| `updatedAt` | [`DateComparator`](date_comparator-input.md) | `n/a` | No | Comparator for the updated at date. |

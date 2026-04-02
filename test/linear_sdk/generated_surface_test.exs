@@ -20,8 +20,7 @@ defmodule LinearSDK.GeneratedSurfaceTest do
              "viewer" => %{
                "id" => "u1",
                "name" => "Ada",
-               "email" => "ada@example.com",
-               "defaultIssuePriority" => "HIGH"
+               "email" => "ada@example.com"
              }
            }
          }
@@ -34,13 +33,7 @@ defmodule LinearSDK.GeneratedSurfaceTest do
         transport: LinearSDK.TransportMock
       )
 
-    assert {:ok, %Prismatic.Response{data: %User{name: "Ada", default_issue_priority: "HIGH"}}} =
+    assert {:ok, %Prismatic.Response{data: %User{name: "Ada", email: "ada@example.com"}}} =
              Viewer.call_typed(client)
-  end
-
-  test "generated namespace exposes inventory lists" do
-    assert LinearSDK.Generated.Operations.Viewer in LinearSDK.Generated.operations()
-    assert LinearSDK.Generated.Models.User in LinearSDK.Generated.models()
-    assert LinearSDK.Generated.Enums.IssuePriority in LinearSDK.Generated.enums()
   end
 end

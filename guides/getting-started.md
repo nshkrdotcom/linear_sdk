@@ -19,8 +19,27 @@ client =
   )
 ```
 
-Run the generated viewer query:
+Execute a GraphQL document:
 
 ```elixir
-{:ok, response} = LinearSDK.Generated.Operations.Viewer.call(client)
+{:ok, response} =
+  LinearSDK.execute_document(
+    client,
+    """
+    query Viewer {
+      viewer {
+        id
+        name
+      }
+    }
+    """
+  )
 ```
+
+Use the generated API reference pages in `guides/api/` to discover:
+
+- root queries
+- mutations
+- subscriptions
+- object and input types
+- enums, unions, interfaces, and scalars

@@ -3,6 +3,5 @@ query Viewer {
     id
     name
     email
-    defaultIssuePriority
   }
 }

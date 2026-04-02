@@ -63,13 +63,16 @@ defmodule LinearSDK.MixProject do
         "cmd MIX_ENV=test mix test",
         "credo --strict",
         "dialyzer --force-check",
-        "docs"
+        "cmd rm -rf doc",
+        "docs",
+        "cmd elixir build_support/docs_assertions.exs"
       ]
     ]
   end
 
   defp dialyzer do
     [
+      ignore_warnings: ".dialyzer_ignore.exs",
       plt_add_deps: :app_tree,
       plt_add_apps: [:mix, :ex_unit, :prismatic_codegen],
       plt_core_path: "priv/plts/core",
@@ -79,7 +82,7 @@ defmodule LinearSDK.MixProject do
 
   defp description do
     """
-    Elixir SDK for Linear built on Prismatic, with committed upstream artifacts and generated GraphQL operations.
+    Elixir SDK for Linear with committed upstream schema artifacts and generated GraphQL API reference docs.
     """
   end
 
@@ -90,12 +93,17 @@ defmodule LinearSDK.MixProject do
       files: ~w(
         assets/linear_sdk.svg
         build_support/dependency_resolver.exs
+        build_support/docs_assertions.exs
         lib
         codegen
+        priv/upstream
         CHANGELOG.md
         LICENSE
         README.md
         mix.exs
+        guides
+        examples
+        TASKS.md
       ),
       licenses: ["MIT"],
       links: %{
@@ -114,43 +122,75 @@ defmodule LinearSDK.MixProject do
       source_url: @source_url,
       source_ref: "v#{@version}",
       extras: extras(),
-      groups_for_extras: groups_for_extras()
+      groups_for_extras: groups_for_extras(),
+      groups_for_modules: groups_for_modules()
     ]
   end
 
   defp extras do
-    [
-      "README.md",
-      "guides/getting-started.md",
-      "guides/client-configuration.md",
-      "guides/using-generated-operations.md",
-      "guides/generation-and-verification.md",
-      "guides/upstream-artifacts.md",
-      "guides/generated-surface.md",
-      "examples/README.md",
-      "CHANGELOG.md",
-      "LICENSE",
-      "TASKS.md"
-    ]
+    ["README.md"] ++
+      user_guides() ++
+      api_reference_extras() ++
+      [
+        "examples/examples.md",
+        "CHANGELOG.md",
+        "LICENSE"
+      ]
   end
 
   defp groups_for_extras do
     [
       {"Overview", ["README.md"]},
-      {"Getting Started",
-       [
-         "guides/getting-started.md",
-         "guides/client-configuration.md",
-         "guides/using-generated-operations.md"
-       ]},
-      {"Generation",
-       [
-         "guides/generation-and-verification.md",
-         "guides/upstream-artifacts.md",
-         "guides/generated-surface.md"
-       ]},
-      {"Examples", ["examples/README.md"]},
-      {"Project", ["CHANGELOG.md", "LICENSE", "TASKS.md"]}
+      {"User Guides", user_guides()},
+      {"API Reference", api_reference_extras()},
+      {"Examples", ["examples/examples.md"]},
+      {"Project", ["CHANGELOG.md", "LICENSE"]}
     ]
+  end
+
+  defp user_guides do
+    [
+      "guides/getting-started.md",
+      "guides/client-configuration.md",
+      "guides/executing-graphql-documents.md",
+      "guides/generation-and-verification.md",
+      "guides/upstream-artifacts.md"
+    ]
+  end
+
+  defp api_reference_extras do
+    [
+      "guides/api/graph-reference.md",
+      "guides/api/queries.md"
+    ] ++
+      wildcard_docs("guides/api/queries/*.md") ++
+      ["guides/api/mutations.md"] ++
+      wildcard_docs("guides/api/mutations/*.md") ++
+      ["guides/api/subscriptions.md"] ++
+      wildcard_docs("guides/api/subscriptions/*.md") ++
+      ["guides/api/objects.md"] ++
+      wildcard_docs("guides/api/objects/*.md") ++
+      ["guides/api/input-objects.md"] ++
+      wildcard_docs("guides/api/input-objects/*.md") ++
+      ["guides/api/interfaces.md"] ++
+      wildcard_docs("guides/api/interfaces/*.md") ++
+      ["guides/api/unions.md"] ++
+      wildcard_docs("guides/api/unions/*.md") ++
+      ["guides/api/enums.md"] ++
+      wildcard_docs("guides/api/enums/*.md") ++
+      ["guides/api/scalars.md"] ++
+      wildcard_docs("guides/api/scalars/*.md")
+  end
+
+  defp groups_for_modules do
+    [
+      {"Core", [LinearSDK, LinearSDK.Client, LinearSDK.Response, LinearSDK.Error]}
+    ]
+  end
+
+  defp wildcard_docs(pattern) do
+    pattern
+    |> Path.wildcard()
+    |> Enum.sort()
   end
 end

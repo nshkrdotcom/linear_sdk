@@ -1,7 +1,5 @@
 defmodule LinearSDK.Generated.Operations.Viewer do
-  @moduledoc """
-  Generated query operation for the `viewer` root field.
-  """
+  @moduledoc false
 
   alias LinearSDK.Generated.Models.User
   alias Prismatic.Operation
@@ -10,8 +8,7 @@ defmodule LinearSDK.Generated.Operations.Viewer do
                id: "viewer",
                name: "Viewer",
                kind: :query,
-               document:
-                 "query Viewer {\n  viewer {\n    id\n    name\n    email\n    defaultIssuePriority\n  }\n}\n",
+               document: "query Viewer {\n  viewer {\n    id\n    name\n    email\n  }\n}\n",
                root_field: "viewer",
                description: nil
              )
