@@ -5,7 +5,7 @@ defmodule LinearSDK.MixProject do
 
   alias LinearSDK.Build.DependencyResolver
 
-  @version "0.1.0"
+  @version "0.1.1"
   @source_url "https://github.com/nshkrdotcom/linear_sdk"
 
   def project do
@@ -60,7 +60,7 @@ defmodule LinearSDK.MixProject do
 
   defp prismatic_runtime_dep do
     if use_hex_runtime_dep?() do
-      {:prismatic, "~> 0.1.0"}
+      {:prismatic, "~> 0.1.1"}
     else
       {:prismatic, path: "../prismatic/apps/prismatic_runtime"}
     end
@@ -208,12 +208,16 @@ defmodule LinearSDK.MixProject do
     Enum.any?(System.argv(), &(&1 in ["hex.build", "hex.publish"]))
   end
 
+  defp locking_release_deps? do
+    publishing_package?() or Enum.any?(System.argv(), &(&1 == "deps.get"))
+  end
+
   defp use_hex_runtime_dep? do
-    publishing_package?() or installing_as_dependency?() or force_hex_runtime_dep?()
+    locking_release_deps?() or installing_as_dependency?() or force_hex_runtime_dep?()
   end
 
   defp include_tooling_deps? do
-    not use_hex_runtime_dep?()
+    not (publishing_package?() or installing_as_dependency?() or force_hex_runtime_dep?())
   end
 
   defp installing_as_dependency? do

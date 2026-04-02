@@ -6,10 +6,22 @@ Everything in this directory talks to the real Linear service.
 - no fake transports
 - no local stub server
 
-Start by exporting a real Linear personal API key:
+Start by exporting either a real Linear personal API key:
 
 ```bash
 export LINEAR_API_KEY=lin_api_...
+```
+
+or a direct OAuth access token:
+
+```bash
+export LINEAR_OAUTH_ACCESS_TOKEN=...
+```
+
+or by saving a token file first:
+
+```bash
+mix linear.oauth --save --manual --no-browser --scope read --scope write
 ```
 
 Run the full read-only suite:
@@ -18,10 +30,11 @@ Run the full read-only suite:
 examples/run_all.sh
 ```
 
-That script only requires `LINEAR_API_KEY`. It auto-discovers a project slug
-and issue when those values are not set. If your workspace has no accessible
-project slug yet, the candidate issue example falls back to a workspace-scoped
-query so the read-only suite still runs.
+That script accepts `LINEAR_API_KEY`, `LINEAR_OAUTH_ACCESS_TOKEN`, or a saved
+`LINEAR_OAUTH_TOKEN_PATH` file. It auto-discovers a project slug and issue when
+those values are not set. If your workspace has no accessible project slug yet,
+the candidate issue example falls back to a workspace-scoped query so the
+read-only suite still runs.
 
 If you also want the write examples:
 
@@ -128,7 +141,12 @@ mix run examples/symphony_transition_issue.exs
 ## Environment Variables
 
 - `LINEAR_API_KEY`
-  - required for every example
+  - optional when you prefer a personal API key
+- `LINEAR_OAUTH_ACCESS_TOKEN`
+  - optional when you already have an OAuth token
+- `LINEAR_OAUTH_TOKEN_PATH`
+  - optional path to a saved token file, defaults to
+    `~/.config/linear_sdk/oauth/linear.json`
 - `LINEAR_PROJECT_SLUG`
   - optional for examples; auto-discovered when omitted. Symphony's own tracker
     config still requires a project slug

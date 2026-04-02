@@ -3,11 +3,38 @@ defmodule LinearSDK.Examples.LiveHelpers do
 
   alias LinearSDK.Client
   alias LinearSDK.Error
+  alias LinearSDK.OAuthTokenFile
   alias LinearSDK.Response
 
   @spec client!() :: Client.t()
   def client! do
-    Client.new!(api_key: env!("LINEAR_API_KEY"))
+    cond do
+      value = env("LINEAR_API_KEY") ->
+        Client.new!(api_key: value)
+
+      value = env("LINEAR_OAUTH_ACCESS_TOKEN") ->
+        Client.new!(access_token: value)
+
+      token_file_available?() ->
+        Client.new!(
+          oauth2: [
+            token_source:
+              {Prismatic.Adapters.TokenSource.File, path: OAuthTokenFile.resolve_env_or_default()}
+          ]
+        )
+
+      true ->
+        raise """
+        Missing Linear auth configuration.
+
+        Set one of:
+          export LINEAR_API_KEY=...
+          export LINEAR_OAUTH_ACCESS_TOKEN=...
+
+        Or save a token file with:
+          mix linear.oauth --save
+        """
+    end
   end
 
   @spec env!(String.t()) :: String.t()
@@ -90,5 +117,10 @@ defmodule LinearSDK.Examples.LiveHelpers do
     IO.puts(String.duplicate("=", String.length(title)))
     IO.puts(Jason.encode_to_iodata!(value, pretty: true))
     IO.puts("")
+  end
+
+  defp token_file_available? do
+    OAuthTokenFile.resolve_env_or_default()
+    |> File.exists?()
   end
 end

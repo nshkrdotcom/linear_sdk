@@ -5,7 +5,7 @@ Add the dependency:
 ```elixir
 def deps do
   [
-    {:linear_sdk, "~> 0.1.0"}
+    {:linear_sdk, "~> 0.1.1"}
   ]
 end
 ```
@@ -40,6 +40,19 @@ client =
     ]
   )
 ```
+
+To create that file interactively:
+
+```bash
+export LINEAR_OAUTH_CLIENT_ID="..."
+export LINEAR_OAUTH_CLIENT_SECRET="..."
+export LINEAR_OAUTH_REDIRECT_URI="http://127.0.0.1:40071/callback"
+mix linear.oauth --save --manual --no-browser --scope read --scope write
+```
+
+For literal loopback redirect URIs, `mix linear.oauth` can also auto-capture
+the callback when the optional callback-listener dependencies are available.
+Otherwise it falls back to the same paste-back flow.
 
 Execute a GraphQL document:
 

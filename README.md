@@ -36,7 +36,7 @@ The repo is intentionally thin:
 ```elixir
 def deps do
   [
-    {:linear_sdk, "~> 0.1.0"}
+    {:linear_sdk, "~> 0.1.1"}
   ]
 end
 ```
@@ -55,8 +55,11 @@ consumed from a relative path:
 Inside this repo, the shared `prismatic` dependencies resolve by one stable
 policy:
 
-- prefer sibling-relative paths when local checkouts exist
-- otherwise use Hex `prismatic ~> 0.1.0` plus GitHub `subdir:` dependencies for
+- prefer sibling-relative paths when local checkouts exist for normal compile,
+  test, and docs work
+- use release Hex/GitHub sources when running `mix deps.get`, `mix hex.build`,
+  or `mix hex.publish` so `mix.lock` stays publishable
+- otherwise use Hex `prismatic ~> 0.1.1` plus GitHub `subdir:` dependencies for
   `prismatic_codegen` and `prismatic_provider_testkit`
 
 That keeps local development, packaging, and downstream dependency behavior
@@ -105,6 +108,23 @@ For provider-local OAuth helpers:
     pkce: true
   )
 ```
+
+For the operator-facing CLI path, use:
+
+```bash
+export LINEAR_OAUTH_CLIENT_ID="..."
+export LINEAR_OAUTH_CLIENT_SECRET="..."
+export LINEAR_OAUTH_REDIRECT_URI="http://127.0.0.1:40071/callback"
+mix linear.oauth --save --manual --no-browser --scope read --scope write
+```
+
+That writes the default token file under
+`~/.config/linear_sdk/oauth/linear.json` unless you override
+`LINEAR_OAUTH_TOKEN_PATH`.
+
+When the optional loopback callback-listener dependencies are present,
+`mix linear.oauth` can capture `http://127.0.0.1/...` callbacks directly.
+Without them, it falls back to the same paste-back flow documented above.
 
 For a step-by-step setup walkthrough, including how to find your project slug,
 issue reference, and target workflow states, see
@@ -157,8 +177,8 @@ issue. See [examples/README.md](examples/README.md) for the full list.
 - [Client Configuration](guides/client-configuration.md): base URL, auth modes,
   transport overrides, and telemetry
 - [OAuth And Token Management](guides/oauth-and-token-management.md): Linear
-  OAuth flows, actor mode, refresh, client credentials, and persisted token
-  sources
+  OAuth flows, actor mode, `mix linear.oauth`, refresh, client credentials, and
+  persisted token sources
 - [Real Linear Usage](guides/real-linear-usage.md): user-friendly onboarding
   for personal API keys, OAuth notes, and Symphony-oriented workflows
 - [Executing GraphQL Documents](guides/executing-graphql-documents.md): ad hoc

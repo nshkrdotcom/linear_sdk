@@ -1,6 +1,7 @@
 defmodule LinearSDK.OAuthTokenFile do
   @moduledoc """
-  Helpers for the saved OAuth token file used by runtime-managed token sources.
+  Helpers for the saved OAuth token file used by `mix linear.oauth --save` and
+  runtime-managed token sources.
 
   The default path follows the XDG config convention:
 

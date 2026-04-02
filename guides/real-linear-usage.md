@@ -96,6 +96,19 @@ LinearSDK.Client.new!(access_token: System.fetch_env!("LINEAR_OAUTH_ACCESS_TOKEN
 If you want the SDK to help with the provider-edge OAuth mechanics, use
 `LinearSDK.OAuth`.
 
+For most human-operated setups, prefer the task wrapper:
+
+```bash
+export LINEAR_OAUTH_CLIENT_ID="..."
+export LINEAR_OAUTH_CLIENT_SECRET="..."
+export LINEAR_OAUTH_REDIRECT_URI="http://127.0.0.1:40071/callback"
+mix linear.oauth --save --manual --no-browser --scope read --scope write
+```
+
+If you have a literal loopback redirect URI and the optional callback-listener
+dependencies are installed, `mix linear.oauth` can also capture the callback
+directly. Otherwise it falls back to the same manual paste-back flow.
+
 ## Step 1B: Use OAuth When You Need App-Oriented Auth
 
 Linear's current OAuth docs describe three app-facing patterns:
@@ -160,6 +173,9 @@ client =
     ]
   )
 ```
+
+The live examples can now use that same saved token file directly if
+`LINEAR_API_KEY` is unset.
 
 ## Step 2: Understand Which Values Are Actually Required
 

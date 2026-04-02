@@ -36,7 +36,11 @@ defmodule LinearSDK.Build.DependencyResolver do
   end
 
   defp prefer_workspace_paths? do
-    not Enum.member?(Path.split(@project_root), "deps")
+    not release_locking_command?() and not Enum.member?(Path.split(@project_root), "deps")
+  end
+
+  defp release_locking_command? do
+    Enum.any?(System.argv(), &(&1 in ["deps.get", "hex.build", "hex.publish"]))
   end
 
   defp existing_path(relative_path) do

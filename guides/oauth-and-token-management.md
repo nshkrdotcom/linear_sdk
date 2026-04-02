@@ -2,6 +2,25 @@
 
 This guide covers the provider-edge OAuth surface in `LinearSDK`.
 
+For most operator workflows, the easiest path is now the built-in task:
+
+```bash
+export LINEAR_OAUTH_CLIENT_ID="..."
+export LINEAR_OAUTH_CLIENT_SECRET="..."
+export LINEAR_OAUTH_REDIRECT_URI="http://127.0.0.1:40071/callback"
+mix linear.oauth --save --manual --no-browser --scope read --scope write
+```
+
+That task stays thin. The provider-specific mechanics still live in
+`LinearSDK.OAuth`, and the generic runtime mechanics live in `Prismatic.OAuth2`
+and `Prismatic.OAuth2.Interactive`.
+
+For literal loopback redirect URIs such as `http://127.0.0.1:40071/callback`,
+`mix linear.oauth` can auto-capture the callback when the optional callback
+listener dependencies are present. Without them, it falls back to manual
+paste-back, which is why the documented first-run path uses
+`--manual --no-browser`.
+
 ## Auth Modes
 
 `LinearSDK` supports three practical auth modes:
@@ -15,6 +34,9 @@ OAuth access-token split. The provider-edge OAuth mechanics in this Elixir SDK
 sit on top of `Prismatic.OAuth2`.
 
 ## Authorization URLs
+
+If you want to drive the flow yourself instead of using `mix linear.oauth`, the
+lower-level helpers are:
 
 Build a user-actor authorization URL:
 
@@ -92,6 +114,12 @@ of the default model for apps created on or after October 1, 2025. This SDK
 targets that current model. It does not wrap the temporary legacy migration
 endpoint for old non-refreshable tokens.
 
+To refresh a saved token file in place:
+
+```bash
+mix linear.oauth refresh
+```
+
 ## Client Credentials
 
 When your Linear app is configured for the client-credentials grant, request an
@@ -108,6 +136,12 @@ app token like this:
 
 This is the app-oriented path for service-style automations that do not depend
 on a user callback flow.
+
+The task wrapper for this mode is:
+
+```bash
+mix linear.oauth client-credentials --save --scope read --scope write
+```
 
 ## Persisted Token Files
 
@@ -139,6 +173,9 @@ Persist a token:
     create_dirs?: true
   )
 ```
+
+Passing `--save` to `mix linear.oauth` or `mix linear.oauth client-credentials`
+performs the same persistence step automatically.
 
 Use it at runtime:
 

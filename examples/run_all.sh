@@ -15,7 +15,8 @@ Usage:
 Runs the real Linear example suite.
 
 Default behavior:
-  - requires only LINEAR_API_KEY
+  - requires either LINEAR_API_KEY, LINEAR_OAUTH_ACCESS_TOKEN, or a saved
+    LINEAR_OAUTH_TOKEN_PATH file
   - runs the read-only examples
   - auto-discovers project and issue context when possible
   - skips write examples unless LINEAR_CONFIRM_WRITE=1
@@ -32,11 +33,19 @@ Write examples:
   - examples/symphony_comment.exs
   - examples/symphony_transition_issue.exs
 
-Required environment:
-  LINEAR_API_KEY
-    Real Linear personal API key.
-    Create one in Linear:
-      Settings -> Security & access -> Personal API keys
+Required auth:
+  One of:
+    LINEAR_API_KEY
+      Real Linear personal API key.
+      Create one in Linear:
+        Settings -> Security & access -> Personal API keys
+
+    LINEAR_OAUTH_ACCESS_TOKEN
+      OAuth access token obtained from Linear.
+
+    LINEAR_OAUTH_TOKEN_PATH
+      Path to a saved token file. `mix linear.oauth --save` writes the default
+      path automatically.
 
 Optional environment:
   LINEAR_PROJECT_SLUG
@@ -66,6 +75,9 @@ Examples:
   export LINEAR_API_KEY=lin_api_...
   examples/run_all.sh
 
+  export LINEAR_OAUTH_ACCESS_TOKEN=lin_oauth_...
+  examples/run_all.sh
+
   export LINEAR_API_KEY=lin_api_...
   export LINEAR_CONFIRM_WRITE=1
   examples/run_all.sh
@@ -77,31 +89,30 @@ More details:
 EOF
 }
 
-require_env() {
-  local name="$1"
+require_auth() {
+  local config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+  local token_path="${LINEAR_OAUTH_TOKEN_PATH:-$config_root/linear_sdk/oauth/linear.json}"
 
-  if [[ -z "${!name:-}" ]]; then
-    if [[ "$name" == "LINEAR_API_KEY" ]]; then
-      cat >&2 <<'EOF'
-Missing required environment variable: LINEAR_API_KEY
+  if [[ -n "${LINEAR_API_KEY:-}" || -n "${LINEAR_OAUTH_ACCESS_TOKEN:-}" || -f "$token_path" ]]; then
+    return 0
+  fi
 
-This example suite only needs a real Linear API key by default.
+  cat >&2 <<'EOF'
+Missing Linear auth configuration.
 
-Create one in Linear:
-  Settings -> Security & access -> Personal API keys
-
-Then export it:
+Set one of:
   export LINEAR_API_KEY=lin_api_...
+  export LINEAR_OAUTH_ACCESS_TOKEN=...
+
+Or save a token file first:
+  mix linear.oauth --save
 
 For full onboarding details:
   guides/real-linear-usage.md
+  guides/oauth-and-token-management.md
 EOF
-    else
-      printf 'Missing required environment variable: %s\n' "$name" >&2
-    fi
 
-    exit 1
-  fi
+  exit 1
 }
 
 is_truthy_env() {
@@ -136,7 +147,7 @@ case "${1:-}" in
     ;;
 esac
 
-require_env "LINEAR_API_KEY"
+require_auth
 
 run_example "examples/viewer.exs"
 run_example "examples/symphony_candidate_issues.exs"
