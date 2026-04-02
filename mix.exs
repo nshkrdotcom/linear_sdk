@@ -130,7 +130,6 @@ defmodule LinearSDK.MixProject do
   defp extras do
     ["README.md"] ++
       user_guides() ++
-      api_reference_extras() ++
       [
         "examples/examples.md",
         "CHANGELOG.md",
@@ -142,7 +141,6 @@ defmodule LinearSDK.MixProject do
     [
       {"Overview", ["README.md"]},
       {"User Guides", user_guides()},
-      {"API Reference", api_reference_extras()},
       {"Examples", ["examples/examples.md"]},
       {"Project", ["CHANGELOG.md", "LICENSE"]}
     ]
@@ -158,39 +156,18 @@ defmodule LinearSDK.MixProject do
     ]
   end
 
-  defp api_reference_extras do
-    [
-      "guides/api/graph-reference.md",
-      "guides/api/queries.md"
-    ] ++
-      wildcard_docs("guides/api/queries/*.md") ++
-      ["guides/api/mutations.md"] ++
-      wildcard_docs("guides/api/mutations/*.md") ++
-      ["guides/api/subscriptions.md"] ++
-      wildcard_docs("guides/api/subscriptions/*.md") ++
-      ["guides/api/objects.md"] ++
-      wildcard_docs("guides/api/objects/*.md") ++
-      ["guides/api/input-objects.md"] ++
-      wildcard_docs("guides/api/input-objects/*.md") ++
-      ["guides/api/interfaces.md"] ++
-      wildcard_docs("guides/api/interfaces/*.md") ++
-      ["guides/api/unions.md"] ++
-      wildcard_docs("guides/api/unions/*.md") ++
-      ["guides/api/enums.md"] ++
-      wildcard_docs("guides/api/enums/*.md") ++
-      ["guides/api/scalars.md"] ++
-      wildcard_docs("guides/api/scalars/*.md")
-  end
-
   defp groups_for_modules do
     [
-      {"Core", [LinearSDK, LinearSDK.Client, LinearSDK.Response, LinearSDK.Error]}
+      {"Core", [LinearSDK, LinearSDK.Client, LinearSDK.Response, LinearSDK.Error]},
+      {"Queries", ~r/^LinearSDK\.Queries(\.|$)/},
+      {"Mutations", ~r/^LinearSDK\.Mutations(\.|$)/},
+      {"Subscriptions", ~r/^LinearSDK\.Subscriptions(\.|$)/},
+      {"Objects", ~r/^LinearSDK\.Objects(\.|$)/},
+      {"Inputs", ~r/^LinearSDK\.Inputs(\.|$)/},
+      {"Interfaces", ~r/^LinearSDK\.Interfaces(\.|$)/},
+      {"Unions", ~r/^LinearSDK\.Unions(\.|$)/},
+      {"Enums", ~r/^LinearSDK\.Enums(\.|$)/},
+      {"Scalars", ~r/^LinearSDK\.Scalars(\.|$)/}
     ]
-  end
-
-  defp wildcard_docs(pattern) do
-    pattern
-    |> Path.wildcard()
-    |> Enum.sort()
   end
 end

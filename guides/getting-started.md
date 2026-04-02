@@ -36,10 +36,11 @@ Execute a GraphQL document:
   )
 ```
 
-Use the generated API reference pages in `guides/api/` to discover:
+Use the generated API reference modules in HexDocs to discover:
 
-- root queries
-- mutations
-- subscriptions
-- object and input types
-- enums, unions, interfaces, and scalars
+- `LinearSDK.Queries`
+- `LinearSDK.Mutations`
+- `LinearSDK.Subscriptions`
+- `LinearSDK.Objects`
+- `LinearSDK.Inputs`
+- `LinearSDK.Enums`

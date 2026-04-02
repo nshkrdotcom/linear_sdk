@@ -11,7 +11,7 @@
 # LinearSDK
 
 `LinearSDK` is an Elixir SDK for Linear with a thin provider-facing client and
-a generated full-schema API reference.
+a generated full-schema API reference published as module docs.
 
 The repo is intentionally thin:
 
@@ -69,8 +69,19 @@ client =
 - [Executing GraphQL Documents](guides/executing-graphql-documents.md): ad hoc GraphQL document execution against the Linear API
 - [Generation and Verification](guides/generation-and-verification.md): local generation and freshness checks
 - [Upstream Artifacts](guides/upstream-artifacts.md): copied schema inputs, curated documents, and official reference manifests
-- [API Reference](guides/api/graph-reference.md): generated full-schema reference for queries, mutations, subscriptions, types, inputs, enums, unions, interfaces, and scalars
 - [Examples](examples/examples.md): small runnable snippets and task reminders
+
+API reference is published under the `Modules` tab in HexDocs:
+
+- `LinearSDK.Queries`
+- `LinearSDK.Mutations`
+- `LinearSDK.Subscriptions`
+- `LinearSDK.Objects`
+- `LinearSDK.Inputs`
+- `LinearSDK.Interfaces`
+- `LinearSDK.Unions`
+- `LinearSDK.Enums`
+- `LinearSDK.Scalars`
 
 ## Generation tasks
 

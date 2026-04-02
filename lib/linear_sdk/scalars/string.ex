@@ -1,0 +1,16 @@
+defmodule LinearSDK.Scalars.String do
+  @moduledoc ~S'''
+  GraphQL scalar `String`.
+
+  The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
+
+  ## Summary
+
+  - Kind: `scalar`
+
+
+  ## Notes
+
+  - Specified By: `n/a`
+  '''
+end

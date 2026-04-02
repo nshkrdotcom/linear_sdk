@@ -32,7 +32,7 @@ The response is returned as `LinearSDK.Response`.
 When the GraphQL response contains errors, the failure is normalized into
 `LinearSDK.Error`.
 
-Use the generated API reference pages under `guides/api/` to discover:
+Use the generated API reference modules in HexDocs to discover:
 
 - available root fields
 - argument names and types

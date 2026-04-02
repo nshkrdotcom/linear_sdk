@@ -1,0 +1,25 @@
+defmodule LinearSDK.Objects.AiConversationTranscribeVideoToolCall do
+  @moduledoc ~S'''
+  GraphQL object `AiConversationTranscribeVideoToolCall`.
+
+  _No description._
+
+  ## Summary
+
+  - Kind: `object`
+
+
+  ## Relationships
+
+  - Implements: LinearSDK.Interfaces.AiConversationBaseToolCall
+
+  ## Fields
+
+  | Name | Type | Arguments | Deprecated | Description |
+  | --- | --- | --- | --- | --- |
+  | `displayInfo` | LinearSDK.Objects.AiConversationToolDisplayInfo! | `none` | No | _ |
+  | `name` | LinearSDK.Enums.AiConversationTool! | `none` | No | The name of the tool that was called. |
+  | `rawArgs` | LinearSDK.Scalars.JSON | `none` | No | The arguments of the tool call. |
+  | `rawResult` | LinearSDK.Scalars.JSON | `none` | No | The result of the tool call. |
+  '''
+end

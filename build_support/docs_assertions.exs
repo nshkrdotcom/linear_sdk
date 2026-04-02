@@ -2,13 +2,12 @@ doc_root = Path.expand("../doc", __DIR__)
 
 required_files = [
   "index.html",
-  "graph-reference.html",
-  "queries.html",
-  "mutations.html",
-  "subscriptions.html",
-  "user-object.html",
-  "project_status_type-enum.html",
-  "date_time-scalar.html"
+  "LinearSDK.Queries.html",
+  "LinearSDK.Queries.Viewer.html",
+  "LinearSDK.Mutations.html",
+  "LinearSDK.Objects.User.html",
+  "LinearSDK.Enums.ProjectStatusType.html",
+  "LinearSDK.Scalars.DateTime.html"
 ]
 
 Enum.each(required_files, fn file ->
@@ -21,10 +20,10 @@ end)
 
 forbidden_strings = [
   "LinearSDK.Generated",
-  "Generated Reference",
   "Thin client wrapper around Prismatic.Client",
   "Prismatic.Client",
-  "guides/generated"
+  "guides/generated",
+  "graph-reference.html"
 ]
 
 doc_files =

@@ -32,6 +32,12 @@ defmodule LinearSDK.GenerationTest do
     assert "guides/api/objects/user-object.md" in ir.artifact_plan.files
     assert "guides/api/enums/project_status_type-enum.md" in ir.artifact_plan.files
     assert "guides/api/scalars/date_time-scalar.md" in ir.artifact_plan.files
+    assert "lib/linear_sdk/queries.ex" in ir.artifact_plan.files
+    assert "lib/linear_sdk/queries/viewer.ex" in ir.artifact_plan.files
+    assert "lib/linear_sdk/mutations.ex" in ir.artifact_plan.files
+    assert "lib/linear_sdk/objects/user.ex" in ir.artifact_plan.files
+    assert "lib/linear_sdk/enums/project_status_type.ex" in ir.artifact_plan.files
+    assert "lib/linear_sdk/scalars/date_time.ex" in ir.artifact_plan.files
 
     refute Enum.any?(ir.artifact_plan.files, &String.starts_with?(&1, "guides/generated/"))
   end

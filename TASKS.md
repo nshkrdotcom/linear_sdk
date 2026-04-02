@@ -16,7 +16,6 @@ Create `linear_sdk` as the first generated consumer of `prismatic`:
 - [guides/getting-started.md](/home/home/p/g/n/linear_sdk/guides/getting-started.md)
 - [guides/client-configuration.md](/home/home/p/g/n/linear_sdk/guides/client-configuration.md)
 - [guides/executing-graphql-documents.md](/home/home/p/g/n/linear_sdk/guides/executing-graphql-documents.md)
-- [guides/api/graph-reference.md](/home/home/p/g/n/linear_sdk/guides/api/graph-reference.md)
 - [guides/generation-and-verification.md](/home/home/p/g/n/linear_sdk/guides/generation-and-verification.md)
 - [guides/upstream-artifacts.md](/home/home/p/g/n/linear_sdk/guides/upstream-artifacts.md)
 
