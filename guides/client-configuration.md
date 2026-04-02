@@ -37,6 +37,24 @@ client =
   )
 ```
 
+Runtime-managed OAuth token source:
+
+```elixir
+client =
+  LinearSDK.Client.new!(
+    oauth2: [
+      token_source:
+        {Prismatic.Adapters.TokenSource.File,
+         path: LinearSDK.OAuthTokenFile.default_path()}
+    ]
+  )
+```
+
+This is the preferred path when another part of your system owns the OAuth
+authorization flow and persists the resulting token for runtime use.
+
+Do not pass `oauth2:` together with `api_key:`, `access_token:`, or `auth:`.
+
 ## Transport Overrides
 
 You can override the transport for tests:

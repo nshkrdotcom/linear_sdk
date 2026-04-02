@@ -27,7 +27,7 @@ defmodule LinearSDK.ClientTest do
         transport: LinearSDK.TransportMock
       )
 
-    assert {"authorization", "linear-api-key"} in client.runtime.context.headers
+    assert client.runtime.context.auth == {:header, "Authorization", "linear-api-key"}
   end
 
   test "maps access_token to a bearer Authorization header" do
@@ -37,7 +37,7 @@ defmodule LinearSDK.ClientTest do
         transport: LinearSDK.TransportMock
       )
 
-    assert {"authorization", "Bearer oauth-token"} in client.runtime.context.headers
+    assert client.runtime.context.auth == {:bearer, "oauth-token"}
   end
 
   test "rejects ambiguous auth configuration" do
@@ -49,6 +49,22 @@ defmodule LinearSDK.ClientTest do
              )
 
     assert message =~ "either :api_key or :access_token"
+  end
+
+  test "passes oauth2 token-source configuration through to the runtime" do
+    oauth2 = [
+      token_source:
+        {Prismatic.Adapters.TokenSource.Static,
+         token: %Prismatic.OAuth2.Token{access_token: "oauth-token"}}
+    ]
+
+    client =
+      Client.new!(
+        oauth2: oauth2,
+        transport: LinearSDK.TransportMock
+      )
+
+    assert client.runtime.context.oauth2 == oauth2
   end
 
   test "executes a document through the configured transport and returns a provider response" do

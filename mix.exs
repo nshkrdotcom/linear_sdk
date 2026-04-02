@@ -180,6 +180,7 @@ defmodule LinearSDK.MixProject do
     [
       "guides/getting-started.md",
       "guides/client-configuration.md",
+      "guides/oauth-and-token-management.md",
       "guides/real-linear-usage.md",
       "guides/executing-graphql-documents.md",
       "guides/generation-and-verification.md",
@@ -190,6 +191,7 @@ defmodule LinearSDK.MixProject do
   defp groups_for_modules do
     [
       {"Core", [LinearSDK, LinearSDK.Client, LinearSDK.Response, LinearSDK.Error]},
+      {"Auth", [LinearSDK.OAuth, LinearSDK.OAuthTokenFile]},
       {"Queries", ~r/^LinearSDK\.Queries(\.|$)/},
       {"Mutations", ~r/^LinearSDK\.Mutations(\.|$)/},
       {"Subscriptions", ~r/^LinearSDK\.Subscriptions(\.|$)/},

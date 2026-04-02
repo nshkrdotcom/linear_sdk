@@ -28,6 +28,19 @@ client =
   )
 ```
 
+Or let the runtime resolve a saved OAuth token file:
+
+```elixir
+client =
+  LinearSDK.Client.new!(
+    oauth2: [
+      token_source:
+        {Prismatic.Adapters.TokenSource.File,
+         path: LinearSDK.OAuthTokenFile.default_path()}
+    ]
+  )
+```
+
 Execute a GraphQL document:
 
 ```elixir
@@ -47,6 +60,10 @@ Execute a GraphQL document:
 
 If you still need to create your Linear personal API key or find your project
 slug, start with [real-linear-usage.md](real-linear-usage.md).
+
+If you need OAuth authorization URLs, code exchange, refresh, or
+client-credentials tokens, use
+[oauth-and-token-management.md](oauth-and-token-management.md).
 
 Use the generated API reference modules in HexDocs to discover:
 

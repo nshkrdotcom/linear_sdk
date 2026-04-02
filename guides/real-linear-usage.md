@@ -19,8 +19,9 @@ From the `linear/linear` monorepo:
 - the TypeScript SDK docs describe two auth modes:
   - personal API key
   - OAuth access token
-- token acquisition, storage, refresh, and rotation are not handled by the SDK
-  for you
+- the first-party SDK still expects you to bring the token, but Linear's
+  official docs also define OAuth authorization, refresh, actor mode, and
+  client-credentials flows for apps
 
 That is the model this Elixir SDK follows too.
 
@@ -49,13 +50,16 @@ The examples in `examples/` cover those same surfaces.
 - default to the production Linear GraphQL endpoint
 - expose a provider-local `api_key:` shortcut for personal API keys
 - expose a provider-local `access_token:` shortcut for OAuth access tokens
+- expose `LinearSDK.OAuth` for authorization URLs, token exchange, refresh, and
+  client-credentials flows
+- support runtime-managed OAuth token sources through `oauth2:`
 - let you execute raw GraphQL documents directly
 
 `LinearSDK` does not:
 
 - create API keys for you
-- run the OAuth authorization code flow for you
-- store or refresh tokens
+- host your OAuth callback endpoint for you
+- own durable install records or secret authority for you
 - alter your Linear workspace setup for you
 
 The example suite does auto-discover a project slug and issue when your
@@ -89,7 +93,73 @@ If you prefer OAuth, you can use:
 LinearSDK.Client.new!(access_token: System.fetch_env!("LINEAR_OAUTH_ACCESS_TOKEN"))
 ```
 
-But the OAuth app setup and token exchange still happen outside this SDK.
+If you want the SDK to help with the provider-edge OAuth mechanics, use
+`LinearSDK.OAuth`.
+
+## Step 1B: Use OAuth When You Need App-Oriented Auth
+
+Linear's current OAuth docs describe three app-facing patterns:
+
+- authorization-code flow for user or app installation approval
+- refresh-token flow for renewable user tokens
+- client-credentials flow for app-to-app automation when enabled on the Linear
+  app
+
+Linear also supports OAuth actor authorization. Passing `actor=app` during the
+authorization flow makes later mutations appear as the app instead of the
+authorizing user. That is the relevant mode for many agentic and service-style
+workloads.
+
+Build an authorization request:
+
+```elixir
+{:ok, request} =
+  LinearSDK.OAuth.authorization_request(
+    client_id: System.fetch_env!("LINEAR_OAUTH_CLIENT_ID"),
+    redirect_uri: System.fetch_env!("LINEAR_OAUTH_REDIRECT_URI"),
+    scopes: ["read", "write"],
+    actor: :app,
+    generate_state: true,
+    pkce: true
+  )
+```
+
+Exchange the callback code:
+
+```elixir
+{:ok, token} =
+  LinearSDK.OAuth.exchange_code(
+    System.fetch_env!("LINEAR_OAUTH_AUTH_CODE"),
+    client_id: System.fetch_env!("LINEAR_OAUTH_CLIENT_ID"),
+    client_secret: System.get_env("LINEAR_OAUTH_CLIENT_SECRET"),
+    redirect_uri: System.fetch_env!("LINEAR_OAUTH_REDIRECT_URI"),
+    pkce_verifier: System.get_env("LINEAR_OAUTH_PKCE_VERIFIER")
+  )
+```
+
+Persist the token in a runtime-managed file:
+
+```elixir
+:ok =
+  Prismatic.Adapters.TokenSource.File.put(
+    token,
+    path: LinearSDK.OAuthTokenFile.default_path(),
+    create_dirs?: true
+  )
+```
+
+Then create a client from that saved token:
+
+```elixir
+client =
+  LinearSDK.Client.new!(
+    oauth2: [
+      token_source:
+        {Prismatic.Adapters.TokenSource.File,
+         path: LinearSDK.OAuthTokenFile.default_path()}
+    ]
+  )
+```
 
 ## Step 2: Understand Which Values Are Actually Required
 
@@ -265,6 +335,19 @@ OAuth access token:
 client =
   LinearSDK.Client.new!(
     access_token: System.fetch_env!("LINEAR_OAUTH_ACCESS_TOKEN")
+  )
+```
+
+OAuth token source:
+
+```elixir
+client =
+  LinearSDK.Client.new!(
+    oauth2: [
+      token_source:
+        {Prismatic.Adapters.TokenSource.File,
+         path: LinearSDK.OAuthTokenFile.default_path()}
+    ]
   )
 ```
 

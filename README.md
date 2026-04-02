@@ -25,6 +25,7 @@ The repo is intentionally thin:
 
 - Linear-specific base URL defaults
 - provider-local auth shortcuts for personal API keys and OAuth access tokens
+- provider-local OAuth helpers built on `Prismatic.OAuth2`
 - committed upstream schema artifacts
 - full generated API reference docs for the upstream graph
 - a small curated document set used for internal generation coverage
@@ -67,10 +68,13 @@ The current upstream `linear/linear` repo and Linear's live docs both point to
 the same operating model:
 
 - personal API keys are created in Linear under `Settings -> Security & access -> Personal API keys`
-- OAuth is supported, but the app registration and token exchange flow are your
-  responsibility
-- SDKs expect you to bring a token; they do not acquire, store, rotate, or
-  refresh credentials for you
+- OAuth is supported through Linear's authorization, token, refresh, and
+  client-credentials endpoints
+- the first-party TypeScript SDK accepts either a personal API key or an OAuth
+  access token
+- durable token storage and install lifecycle remain your responsibility, but
+  this SDK now exposes provider-local OAuth helpers and runtime-managed token
+  sources
 
 `LinearSDK` makes those two auth modes explicit:
 
@@ -85,6 +89,20 @@ client =
 oauth_client =
   LinearSDK.Client.new!(
     access_token: System.fetch_env!("LINEAR_OAUTH_ACCESS_TOKEN")
+  )
+```
+
+For provider-local OAuth helpers:
+
+```elixir
+{:ok, request} =
+  LinearSDK.OAuth.authorization_request(
+    client_id: System.fetch_env!("LINEAR_OAUTH_CLIENT_ID"),
+    redirect_uri: System.fetch_env!("LINEAR_OAUTH_REDIRECT_URI"),
+    scopes: ["read", "write"],
+    actor: :app,
+    generate_state: true,
+    pkce: true
   )
 ```
 
@@ -138,6 +156,9 @@ issue. See [examples/README.md](examples/README.md) for the full list.
   first document execution
 - [Client Configuration](guides/client-configuration.md): base URL, auth modes,
   transport overrides, and telemetry
+- [OAuth And Token Management](guides/oauth-and-token-management.md): Linear
+  OAuth flows, actor mode, refresh, client credentials, and persisted token
+  sources
 - [Real Linear Usage](guides/real-linear-usage.md): user-friendly onboarding
   for personal API keys, OAuth notes, and Symphony-oriented workflows
 - [Executing GraphQL Documents](guides/executing-graphql-documents.md): ad hoc

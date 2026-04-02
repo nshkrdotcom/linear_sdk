@@ -7,6 +7,7 @@ defmodule LinearSDK.Client do
   - `new/1` and `new!/1` create a `LinearSDK.Client`
   - `api_key:` configures a Linear personal API key
   - `access_token:` configures an OAuth access token
+  - `oauth2:` configures runtime-managed OAuth token sources
   - `execute_document/4` executes an ad hoc GraphQL document
   - successful responses are returned as `LinearSDK.Response`
   - failures are returned as `LinearSDK.Error`
@@ -60,6 +61,12 @@ defmodule LinearSDK.Client do
     |> wrap_result()
   end
 
+  @doc false
+  @spec req_options(t()) :: keyword()
+  def req_options(%__MODULE__{runtime: runtime}) do
+    runtime.context.req_options || []
+  end
+
   defp wrap_result({:ok, %Prismatic.Response{} = response}) do
     {:ok, LinearSDK.Response.from_prismatic(response)}
   end
@@ -69,38 +76,63 @@ defmodule LinearSDK.Client do
   end
 
   defp normalize_provider_auth(opts) when is_list(opts) do
-    has_explicit_auth? = Keyword.has_key?(opts, :auth)
-    has_api_key? = Keyword.has_key?(opts, :api_key)
-    has_access_token? = Keyword.has_key?(opts, :access_token)
+    with :ok <- validate_auth_modes(opts) do
+      normalize_provider_shortcuts(opts)
+    end
+  end
+
+  defp validate_auth_modes(opts) do
+    modes = present_auth_modes(opts)
 
     cond do
-      has_explicit_auth? and (has_api_key? or has_access_token?) ->
+      :auth in modes and length(modes) > 1 ->
         {:error,
          ArgumentError.exception(
-           "pass either :auth or provider shortcuts (:api_key / :access_token), not both"
+           "pass either :auth, :oauth2, or provider shortcuts (:api_key / :access_token), not multiple auth modes"
          )}
 
-      has_api_key? and has_access_token? ->
+      :oauth2 in modes and Enum.any?(modes, &(&1 in [:api_key, :access_token])) ->
+        {:error,
+         ArgumentError.exception(
+           "pass either :oauth2 or provider shortcuts (:api_key / :access_token), not both"
+         )}
+
+      Enum.sort([:api_key, :access_token]) == Enum.sort(modes) ->
         {:error, ArgumentError.exception("pass either :api_key or :access_token, not both")}
 
-      has_api_key? ->
-        with {:ok, api_key} <- normalize_secret_option(opts, :api_key) do
-          {:ok,
-           opts
-           |> Keyword.delete(:api_key)
-           |> Keyword.put(:auth, {:header, "Authorization", api_key})}
-        end
+      true ->
+        :ok
+    end
+  end
 
-      has_access_token? ->
-        with {:ok, access_token} <- normalize_secret_option(opts, :access_token) do
-          {:ok,
-           opts
-           |> Keyword.delete(:access_token)
-           |> Keyword.put(:auth, {:bearer, access_token})}
-        end
+  defp present_auth_modes(opts) do
+    [:auth, :oauth2, :api_key, :access_token]
+    |> Enum.filter(&Keyword.has_key?(opts, &1))
+  end
+
+  defp normalize_provider_shortcuts(opts) do
+    cond do
+      Keyword.has_key?(opts, :api_key) ->
+        normalize_provider_shortcut(opts, :api_key, fn api_key ->
+          {:header, "Authorization", api_key}
+        end)
+
+      Keyword.has_key?(opts, :access_token) ->
+        normalize_provider_shortcut(opts, :access_token, fn access_token ->
+          {:bearer, access_token}
+        end)
 
       true ->
         {:ok, opts}
+    end
+  end
+
+  defp normalize_provider_shortcut(opts, key, auth_builder) do
+    with {:ok, secret} <- normalize_secret_option(opts, key) do
+      {:ok,
+       opts
+       |> Keyword.delete(key)
+       |> Keyword.put(:auth, auth_builder.(secret))}
     end
   end
 
