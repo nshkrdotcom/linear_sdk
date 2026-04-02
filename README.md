@@ -40,6 +40,27 @@ def deps do
 end
 ```
 
+```bash
+mix deps.get
+```
+
+For active local development beside sibling checkouts, `linear_sdk` can also be
+consumed from a relative path:
+
+```elixir
+{:linear_sdk, path: "../linear_sdk"}
+```
+
+Inside this repo, the shared `prismatic` dependencies resolve by one stable
+policy:
+
+- prefer sibling-relative paths when local checkouts exist
+- otherwise use Hex `prismatic ~> 0.1.0` plus GitHub `subdir:` dependencies for
+  `prismatic_codegen` and `prismatic_provider_testkit`
+
+That keeps local development, packaging, and downstream dependency behavior
+aligned without requiring a committed vendored `deps/` tree.
+
 ## Real Linear Onboarding
 
 The current upstream `linear/linear` repo and Linear's live docs both point to

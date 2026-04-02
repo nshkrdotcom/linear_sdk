@@ -27,8 +27,15 @@ defmodule LinearSDK.MixProject do
     ]
   end
 
-  defp elixirc_paths(:dev), do: ["lib", "codegen"]
-  defp elixirc_paths(:test), do: ["lib", "codegen", "test/support"]
+  defp elixirc_paths(:dev), do: if(include_tooling_deps?(), do: ["lib", "codegen"], else: ["lib"])
+
+  defp elixirc_paths(:test),
+    do:
+      if(include_tooling_deps?(),
+        do: ["lib", "codegen", "test/support"],
+        else: ["lib", "test/support"]
+      )
+
   defp elixirc_paths(_), do: ["lib"]
 
   def application do
@@ -39,9 +46,8 @@ defmodule LinearSDK.MixProject do
 
   defp deps do
     [
-      DependencyResolver.prismatic_runtime(),
-      DependencyResolver.prismatic_codegen(only: [:dev, :test], runtime: false),
-      DependencyResolver.prismatic_provider_testkit(only: :test, runtime: false),
+      prismatic_runtime_dep(),
+      codegen_deps(),
       {:jason, "~> 1.4"},
       {:telemetry, "~> 1.4"},
       {:mox, "~> 1.2", only: :test, runtime: false},
@@ -49,6 +55,26 @@ defmodule LinearSDK.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.40", only: :dev, runtime: false}
     ]
+    |> List.flatten()
+  end
+
+  defp prismatic_runtime_dep do
+    if use_hex_runtime_dep?() do
+      {:prismatic, "~> 0.1.0"}
+    else
+      {:prismatic, path: "../prismatic/apps/prismatic_runtime"}
+    end
+  end
+
+  defp codegen_deps do
+    if include_tooling_deps?() do
+      [
+        DependencyResolver.prismatic_codegen(only: [:dev, :test], runtime: false),
+        DependencyResolver.prismatic_provider_testkit(only: :test, runtime: false)
+      ]
+    else
+      []
+    end
   end
 
   defp aliases do
@@ -71,10 +97,17 @@ defmodule LinearSDK.MixProject do
   end
 
   defp dialyzer do
+    plt_add_apps =
+      if include_tooling_deps?() do
+        [:mix, :ex_unit, :prismatic_codegen]
+      else
+        [:mix, :ex_unit]
+      end
+
     [
       ignore_warnings: ".dialyzer_ignore.exs",
       plt_add_deps: :app_tree,
-      plt_add_apps: [:mix, :ex_unit, :prismatic_codegen],
+      plt_add_apps: plt_add_apps,
       plt_core_path: "priv/plts/core",
       plt_local_path: "priv/plts/project/dialyzer.plt"
     ]
@@ -91,19 +124,16 @@ defmodule LinearSDK.MixProject do
       name: "linear_sdk",
       description: description(),
       files: ~w(
-        assets/linear_sdk.svg
         build_support/dependency_resolver.exs
         build_support/docs_assertions.exs
         lib
         codegen
-        priv/upstream
+        priv/upstream/documents
+        priv/upstream/official_manifests
         CHANGELOG.md
         LICENSE
         README.md
         mix.exs
-        guides
-        examples
-        TASKS.md
       ),
       licenses: ["MIT"],
       links: %{
@@ -170,5 +200,25 @@ defmodule LinearSDK.MixProject do
       {"Enums", ~r/^LinearSDK\.Enums(\.|$)/},
       {"Scalars", ~r/^LinearSDK\.Scalars(\.|$)/}
     ]
+  end
+
+  defp publishing_package? do
+    Enum.any?(System.argv(), &(&1 in ["hex.build", "hex.publish"]))
+  end
+
+  defp use_hex_runtime_dep? do
+    publishing_package?() or installing_as_dependency?() or force_hex_runtime_dep?()
+  end
+
+  defp include_tooling_deps? do
+    not use_hex_runtime_dep?()
+  end
+
+  defp installing_as_dependency? do
+    Enum.member?(Path.split(__DIR__), "deps")
+  end
+
+  defp force_hex_runtime_dep? do
+    System.get_env("LINEAR_SDK_HEX_DEPS") in ["1", "true", "TRUE", "yes", "YES"]
   end
 end

@@ -1,17 +1,8 @@
 defmodule LinearSDK.Build.DependencyResolver do
   @moduledoc false
 
-  @workspace_root Path.expand("..", __DIR__)
+  @project_root Path.expand("..", __DIR__)
   @repo "nshkrdotcom/prismatic"
-
-  def prismatic_runtime(opts \\ []) do
-    resolve(
-      :prismatic,
-      ["../prismatic/apps/prismatic_runtime"],
-      [github: @repo, branch: "master", subdir: "apps/prismatic_runtime"],
-      opts
-    )
-  end
 
   def prismatic_codegen(opts \\ []) do
     resolve(
@@ -39,9 +30,20 @@ defmodule LinearSDK.Build.DependencyResolver do
   end
 
   defp workspace_path(relative_paths) do
-    Enum.find_value(relative_paths, fn relative_path ->
-      expanded = Path.expand(relative_path, @workspace_root)
-      if File.dir?(expanded), do: expanded
-    end)
+    if prefer_workspace_paths?() do
+      Enum.find_value(relative_paths, &existing_path/1)
+    end
+  end
+
+  defp prefer_workspace_paths? do
+    not Enum.member?(Path.split(@project_root), "deps")
+  end
+
+  defp existing_path(relative_path) do
+    expanded_path = Path.expand(relative_path, @project_root)
+
+    if File.dir?(expanded_path) do
+      expanded_path
+    end
   end
 end
