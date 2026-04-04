@@ -133,6 +133,7 @@ defmodule LinearSDK.MixProject do
         CHANGELOG.md
         LICENSE
         README.md
+        assets
         mix.exs
       ),
       licenses: ["MIT"],
