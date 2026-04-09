@@ -3,6 +3,10 @@
 `LinearSDK.Client` keeps the public configuration surface small and
 Linear-specific.
 
+Under the hood it builds on the bounded `prismatic` family surface, then lets
+`prismatic` carry GraphQL-over-HTTP execution down to the shared `pristine`
+HTTP lane. The public SDK surface still stays provider-local in `LinearSDK.*`.
+
 Defaults:
 
 - base URL: `https://api.linear.app/graphql`

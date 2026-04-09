@@ -1,5 +1,10 @@
 # Getting Started
 
+`LinearSDK` keeps the user-facing contract in `LinearSDK.*` while delegating
+GraphQL execution to the bounded `prismatic` family surface. Lower unary HTTP
+execution stays below that layer in the shared `pristine` lane, so this repo
+does not expose raw lower transport packages as part of its public API.
+
 Add the dependency:
 
 ```elixir

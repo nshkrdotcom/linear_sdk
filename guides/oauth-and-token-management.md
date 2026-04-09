@@ -54,7 +54,9 @@ to `Settings -> API -> Your Applications` for creating the OAuth app itself.
 
 That task stays thin. The provider-specific mechanics still live in
 `LinearSDK.OAuth`, and the generic runtime mechanics live in `Prismatic.OAuth2`
-and `Prismatic.OAuth2.Interactive`.
+and `Prismatic.OAuth2.Interactive`. Lower HTTP execution stays below that
+family boundary in the shared `pristine` lane rather than becoming a
+repo-local transport concern here.
 
 ## Official Endpoint Map And Current SDK Coverage
 

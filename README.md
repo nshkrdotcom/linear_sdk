@@ -21,6 +21,19 @@ The repo is intentionally thin:
   ergonomics
 - generated internal support code and API reference docs are committed source
 
+The bounded family dependency is intentional. `linear_sdk` targets the final
+`prismatic` surface:
+
+- `Prismatic.Client.new/1`
+- `Prismatic.Client.execute_operation/4`
+- `Prismatic.Client.execute_document/4`
+- `Prismatic.OAuth2`
+- `Prismatic.Adapters.TokenSource.*`
+
+The public SDK surface still stays provider-local through `LinearSDK.*`. Lower
+GraphQL-over-HTTP execution flows through `prismatic` and then the shared
+`pristine` HTTP lane instead of becoming a repo-local transport API here.
+
 ## What this repo owns
 
 - Linear-specific base URL defaults
