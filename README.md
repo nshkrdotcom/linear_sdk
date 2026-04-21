@@ -24,9 +24,9 @@ The repo is intentionally thin:
 The bounded family dependency is intentional. `linear_sdk` targets the final
 `prismatic` surface:
 
-- `Prismatic.Client.new/1`
-- `Prismatic.Client.execute_operation/4`
-- `Prismatic.Client.execute_document/4`
+- the shared runtime client constructor
+- generated-operation execution
+- ad hoc document execution
 - `Prismatic.OAuth2`
 - `Prismatic.Adapters.TokenSource.*`
 
