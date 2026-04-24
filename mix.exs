@@ -59,10 +59,17 @@ defmodule LinearSDK.MixProject do
   end
 
   defp prismatic_runtime_dep do
-    if use_hex_runtime_dep?() do
-      {:prismatic, "~> 0.2.0"}
-    else
-      {:prismatic, path: "../prismatic/apps/prismatic_runtime"}
+    case prismatic_runtime_path() do
+      nil -> {:prismatic, "~> 0.2.0"}
+      path -> {:prismatic, path: path}
+    end
+  end
+
+  defp prismatic_runtime_path do
+    if include_workspace_paths?() do
+      path = Path.expand("../prismatic/apps/prismatic_runtime", __DIR__)
+
+      if File.dir?(path), do: path
     end
   end
 
@@ -220,30 +227,15 @@ defmodule LinearSDK.MixProject do
     Enum.any?(System.argv(), &(&1 in ["hex.build", "hex.publish"]))
   end
 
-  defp locking_release_deps? do
-    publishing_package?() or Enum.any?(System.argv(), &(&1 == "deps.get"))
-  end
-
-  defp use_hex_runtime_dep? do
-    (locking_release_deps?() and not force_workspace_path_deps?()) or
-      installing_as_dependency?() or force_hex_runtime_dep?()
-  end
-
   defp include_tooling_deps? do
-    force_workspace_path_deps?() or
-      not (publishing_package?() or installing_as_dependency?() or force_hex_runtime_dep?())
+    not publishing_package?() and not installing_as_dependency?()
+  end
+
+  defp include_workspace_paths? do
+    not publishing_package?() and not installing_as_dependency?()
   end
 
   defp installing_as_dependency? do
     Enum.member?(Path.split(__DIR__), "deps")
-  end
-
-  defp force_hex_runtime_dep? do
-    System.get_env("LINEAR_SDK_HEX_DEPS") in ["1", "true", "TRUE", "yes", "YES"]
-  end
-
-  defp force_workspace_path_deps? do
-    not force_hex_runtime_dep?() and
-      System.get_env("FORCE_WORKSPACE_PATH_DEPS") in ["1", "true", "TRUE", "yes", "YES"]
   end
 end

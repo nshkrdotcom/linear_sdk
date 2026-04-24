@@ -8,18 +8,16 @@ defmodule LinearSDK.SourceCompatibilityTest do
   setup do
     original_project = Mix.Project.get()
     original_argv = System.argv()
-    original_workspace_paths = System.get_env("FORCE_WORKSPACE_PATH_DEPS")
 
     on_exit(fn ->
       System.argv(original_argv)
-      restore_env("FORCE_WORKSPACE_PATH_DEPS", original_workspace_paths)
       restore_mix_project_stack(original_project)
     end)
 
     :ok
   end
 
-  test "mix deps.get resolves release sources even when sibling workspaces exist", %{
+  test "hex packaging commands resolve published runtime deps without tooling deps", %{
     tmp_dir: tmp_dir
   } do
     probe_module =
@@ -32,23 +30,15 @@ defmodule LinearSDK.SourceCompatibilityTest do
     mix_path = Path.join([tmp_dir, "standalone", "linear_sdk", "mix.exs"])
 
     write_transformed_mix_exs!(mix_path, probe_module)
-    System.argv(["deps.get"])
+    System.argv(["hex.build"])
 
     assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
 
     deps = probe_module.project()[:deps]
 
     assert {:prismatic, "~> 0.2.0"} = find_dependency!(deps, :prismatic)
-
-    assert {:prismatic_codegen, opts} = find_dependency!(deps, :prismatic_codegen)
-    assert opts[:github] == "nshkrdotcom/prismatic"
-    refute Keyword.has_key?(opts, :path)
-
-    assert {:prismatic_provider_testkit, opts} =
-             find_dependency!(deps, :prismatic_provider_testkit)
-
-    assert opts[:github] == "nshkrdotcom/prismatic"
-    refute Keyword.has_key?(opts, :path)
+    refute dependency_present?(deps, :prismatic_codegen)
+    refute dependency_present?(deps, :prismatic_provider_testkit)
 
     on_exit(fn ->
       :code.purge(probe_module)
@@ -56,7 +46,7 @@ defmodule LinearSDK.SourceCompatibilityTest do
     end)
   end
 
-  test "FORCE_WORKSPACE_PATH_DEPS=1 keeps sibling workspace paths available during deps.get", %{
+  test "mix deps.get keeps sibling workspace paths available", %{
     tmp_dir: tmp_dir
   } do
     probe_module =
@@ -68,8 +58,11 @@ defmodule LinearSDK.SourceCompatibilityTest do
 
     mix_path = Path.join([tmp_dir, "standalone", "linear_sdk", "mix.exs"])
 
+    prismatic_runtime_path =
+      Path.join([tmp_dir, "standalone", "prismatic", "apps", "prismatic_runtime"])
+
+    File.mkdir_p!(prismatic_runtime_path)
     write_transformed_mix_exs!(mix_path, probe_module)
-    System.put_env("FORCE_WORKSPACE_PATH_DEPS", "1")
     System.argv(["deps.get"])
 
     assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
@@ -77,7 +70,7 @@ defmodule LinearSDK.SourceCompatibilityTest do
     deps = probe_module.project()[:deps]
 
     assert {:prismatic, opts} = find_dependency!(deps, :prismatic)
-    assert opts[:path] == "../prismatic/apps/prismatic_runtime"
+    assert opts[:path] == prismatic_runtime_path
 
     assert {:prismatic_codegen, opts} = find_dependency!(deps, :prismatic_codegen)
 
@@ -127,6 +120,15 @@ defmodule LinearSDK.SourceCompatibilityTest do
     end) || flunk("expected dependency #{inspect(app)} to be present")
   end
 
+  defp dependency_present?(deps, app) do
+    Enum.any?(deps, fn
+      {^app, _requirement} -> true
+      {^app, _requirement, _opts} -> true
+      {^app, opts} when is_list(opts) -> true
+      _other -> false
+    end)
+  end
+
   defp restore_mix_project_stack(original_project) do
     case Mix.Project.get() do
       ^original_project ->
@@ -140,7 +142,4 @@ defmodule LinearSDK.SourceCompatibilityTest do
         restore_mix_project_stack(original_project)
     end
   end
-
-  defp restore_env(name, nil), do: System.delete_env(name)
-  defp restore_env(name, value), do: System.put_env(name, value)
 end
