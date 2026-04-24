@@ -8,7 +8,7 @@ defmodule LinearSDK.Build.DependencyResolver do
     resolve(
       :prismatic_codegen,
       ["../prismatic/apps/prismatic_codegen"],
-      [github: @repo, branch: "master", subdir: "apps/prismatic_codegen"],
+      [github: @repo, branch: "main", subdir: "apps/prismatic_codegen"],
       opts
     )
   end
@@ -17,7 +17,7 @@ defmodule LinearSDK.Build.DependencyResolver do
     resolve(
       :prismatic_provider_testkit,
       ["../prismatic/apps/prismatic_provider_testkit"],
-      [github: @repo, branch: "master", subdir: "apps/prismatic_provider_testkit"],
+      [github: @repo, branch: "main", subdir: "apps/prismatic_provider_testkit"],
       opts
     )
   end
