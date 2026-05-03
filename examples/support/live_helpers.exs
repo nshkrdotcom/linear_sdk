@@ -224,9 +224,13 @@ defmodule LinearSDK.Examples.LiveHelpers do
 
       value ->
         value
-        |> String.split(~r/[\s,]+/, trim: true)
+        |> split_words_and_commas()
         |> Enum.reject(&(&1 == ""))
     end
+  end
+
+  defp split_words_and_commas(value) do
+    String.split(value, [",", " ", "\n", "\r", "\t", "\f"], trim: true)
   end
 
   def ok!({:ok, value}, _label), do: value

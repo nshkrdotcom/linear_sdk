@@ -93,7 +93,7 @@ defmodule LinearSDK.MixProject do
         "format --check-formatted",
         "compile --warnings-as-errors",
         "linear.verify",
-        "cmd MIX_ENV=test mix test",
+        "cmd env MIX_ENV=test mix test",
         "credo --strict",
         "dialyzer --force-check",
         "cmd rm -rf doc",
@@ -211,16 +211,36 @@ defmodule LinearSDK.MixProject do
     [
       {"Core", [LinearSDK, LinearSDK.Client, LinearSDK.Response, LinearSDK.Error]},
       {"Auth", [LinearSDK.OAuth, LinearSDK.OAuthTokenFile]},
-      {"Queries", ~r/^LinearSDK\.Queries(\.|$)/},
-      {"Mutations", ~r/^LinearSDK\.Mutations(\.|$)/},
-      {"Subscriptions", ~r/^LinearSDK\.Subscriptions(\.|$)/},
-      {"Objects", ~r/^LinearSDK\.Objects(\.|$)/},
-      {"Inputs", ~r/^LinearSDK\.Inputs(\.|$)/},
-      {"Interfaces", ~r/^LinearSDK\.Interfaces(\.|$)/},
-      {"Unions", ~r/^LinearSDK\.Unions(\.|$)/},
-      {"Enums", ~r/^LinearSDK\.Enums(\.|$)/},
-      {"Scalars", ~r/^LinearSDK\.Scalars(\.|$)/}
+      generated_module_group("Queries", "queries"),
+      generated_module_group("Mutations", "mutations"),
+      generated_module_group("Subscriptions", "subscriptions"),
+      generated_module_group("Objects", "objects"),
+      generated_module_group("Inputs", "inputs"),
+      generated_module_group("Interfaces", "interfaces"),
+      generated_module_group("Unions", "unions"),
+      generated_module_group("Enums", "enums"),
+      generated_module_group("Scalars", "scalars")
     ]
+  end
+
+  defp generated_module_group(label, directory), do: {label, generated_modules(directory)}
+
+  defp generated_modules(directory) do
+    root_file = Path.join(["lib", "linear_sdk", "#{directory}.ex"])
+    nested_files = Path.wildcard(Path.join(["lib", "linear_sdk", directory, "**/*.ex"]))
+
+    [root_file | nested_files]
+    |> Enum.filter(&File.regular?/1)
+    |> Enum.map(&module_from_lib_path/1)
+  end
+
+  defp module_from_lib_path(path) do
+    path
+    |> Path.rootname()
+    |> Path.split()
+    |> Enum.drop(1)
+    |> Enum.map(&Macro.camelize/1)
+    |> Module.concat()
   end
 
   defp publishing_package? do

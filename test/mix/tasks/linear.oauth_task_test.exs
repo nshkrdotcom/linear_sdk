@@ -222,15 +222,13 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
                path: path
              )
 
-    assert_raise Mix.Error, ~r/does not contain a refresh token/, fn ->
-      OAuthTask.run(["refresh", "--path=#{path}"])
-    end
+    error = assert_raise Mix.Error, fn -> OAuthTask.run(["refresh", "--path=#{path}"]) end
+    assert error.message =~ "does not contain a refresh token"
   end
 
   test "raises on invalid actor values" do
-    assert_raise Mix.Error, ~r/invalid actor/, fn ->
-      OAuthTask.run(["--actor=robot"])
-    end
+    error = assert_raise Mix.Error, fn -> OAuthTask.run(["--actor=robot"]) end
+    assert error.message =~ "invalid actor"
   end
 
   test "requests client credentials tokens and prints exports" do

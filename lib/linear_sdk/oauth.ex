@@ -170,11 +170,15 @@ defmodule LinearSDK.OAuth do
 
   defp normalize_scopes(scopes) when is_binary(scopes) do
     scopes
-    |> String.split(~r/[\s,]+/, trim: true)
+    |> split_scope_string()
     |> Enum.reject(&(&1 == ""))
   end
 
   defp normalize_scopes(_scopes), do: nil
+
+  defp split_scope_string(scopes) do
+    String.split(scopes, [",", " ", "\n", "\r", "\t", "\f"], trim: true)
+  end
 
   defp normalize_actor(value) when value in [:app, "app"], do: "app"
   defp normalize_actor(value) when value in [:user, "user"], do: "user"
