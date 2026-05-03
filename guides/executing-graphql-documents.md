@@ -32,6 +32,12 @@ The response is returned as `LinearSDK.Response`.
 When the GraphQL response contains errors, the failure is normalized into
 `LinearSDK.Error`.
 
+If the client was built with `governed_authority:`, each request must use the
+authority-selected endpoint, credential materialization, target, and operation
+policy. Request-level auth, headers, endpoint URLs, operation-policy overrides,
+webhook secrets, OAuth app-user values, and agent-session identity values are
+rejected before execution.
+
 For documents that declare multiple operations, select the one you want
 explicitly:
 

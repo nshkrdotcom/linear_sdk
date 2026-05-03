@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- Added `LinearSDK.GovernedAuthority` and governed client construction backed
+  by `Prismatic.GovernedAuthority`.
+
+### Changed
+
+- Documented the split between standalone Linear env/OAuth/token-file flows and
+  governed authority execution.
+- Governed clients now reject unmanaged auth, endpoint, webhook, OAuth
+  app-user, and agent-session identity inputs at construction and request time.
+
 ## [0.2.0] - 2026-04-01
 
 ### Added

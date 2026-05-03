@@ -422,3 +422,24 @@ client =
     auth: {:header, "Authorization", System.fetch_env!("LINEAR_API_KEY")}
   )
 ```
+
+Governed authority:
+
+```elixir
+authority =
+  LinearSDK.GovernedAuthority.new!(
+    credential_ref: "credential://linear/workspace/main",
+    credential_lease_ref: "lease://linear/workspace/main",
+    target_ref: "target://linear/workspace/main",
+    operation_policy_ref: "operation-policy://linear/read",
+    redaction_ref: "redaction://linear/default"
+  )
+
+client =
+  LinearSDK.Client.new!(
+    governed_authority: authority
+  )
+```
+
+Governed clients reject standalone env, token-file, direct-auth, direct
+endpoint, webhook-secret, OAuth app-user, and agent-session identity inputs.

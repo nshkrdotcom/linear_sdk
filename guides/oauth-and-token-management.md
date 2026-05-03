@@ -109,6 +109,13 @@ The first-party TypeScript SDK currently documents the same API-key versus
 OAuth access-token split. The provider-edge OAuth mechanics in this Elixir SDK
 sit on top of `Prismatic.OAuth2`.
 
+These modes are standalone runtime modes. They are not governed authority, and
+they are rejected when `governed_authority:` is present. A governed Linear
+client must receive selected refs for credential, lease, target, operation
+policy, and redaction through `LinearSDK.GovernedAuthority`; it does not read
+OAuth env vars, saved token files, webhook secrets, OAuth app-user values, or
+agent-session identity values as credential authority.
+
 ## Authorization URLs
 
 If you want to drive the flow yourself instead of using `mix linear.oauth`, the
@@ -303,3 +310,6 @@ client =
 
 This keeps the provider-specific URLs and auth semantics in `linear_sdk` while
 keeping generic token refresh behavior in `prismatic`.
+
+Persisted token files are standalone runtime sources only. They are not read by
+governed clients and do not satisfy `LinearSDK.GovernedAuthority`.

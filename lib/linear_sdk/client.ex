@@ -16,6 +16,8 @@ defmodule LinearSDK.Client do
   code-generated helpers, but it is not part of the user-facing API docs.
   """
 
+  alias LinearSDK.GovernedAuthority
+
   @default_base_url "https://api.linear.app/graphql"
 
   @opaque t :: %__MODULE__{
@@ -28,10 +30,9 @@ defmodule LinearSDK.Client do
   @spec new(keyword()) :: {:ok, t()} | {:error, Exception.t()}
   def new(opts \\ []) do
     with {:ok, normalized_opts} <- normalize_provider_auth(opts),
+         runtime_opts = maybe_put_default_base_url(normalized_opts),
          {:ok, runtime} <-
-           normalized_opts
-           |> Keyword.put_new(:base_url, @default_base_url)
-           |> Prismatic.Client.new() do
+           Prismatic.Client.new(runtime_opts) do
       {:ok, %__MODULE__{runtime: runtime}}
     else
       {:error, reason} -> {:error, reason}
@@ -50,15 +51,24 @@ defmodule LinearSDK.Client do
   @spec execute_operation(t(), Prismatic.Operation.t(), map(), keyword()) ::
           {:ok, Prismatic.Response.t()} | {:error, Prismatic.Error.t()}
   def execute_operation(%__MODULE__{runtime: runtime}, operation, variables \\ %{}, opts \\ []) do
-    Prismatic.Client.execute_operation(runtime, operation, variables, opts)
+    case reject_governed_request_options(runtime, opts) do
+      :ok -> Prismatic.Client.execute_operation(runtime, operation, variables, opts)
+      {:error, key} -> {:error, prismatic_governed_request_error(key)}
+    end
   end
 
   @spec execute_document(t(), String.t(), map(), keyword()) ::
           {:ok, LinearSDK.Response.t()} | {:error, LinearSDK.Error.t()}
   def execute_document(%__MODULE__{runtime: runtime}, document, variables \\ %{}, opts \\ []) do
-    runtime
-    |> Prismatic.Client.execute_document(document, variables, opts)
-    |> wrap_result()
+    case reject_governed_request_options(runtime, opts) do
+      :ok ->
+        runtime
+        |> Prismatic.Client.execute_document(document, variables, opts)
+        |> wrap_result()
+
+      {:error, key} ->
+        {:error, linear_governed_request_error(key)}
+    end
   end
 
   @doc false
@@ -76,7 +86,9 @@ defmodule LinearSDK.Client do
   end
 
   defp normalize_provider_auth(opts) when is_list(opts) do
-    with :ok <- validate_auth_modes(opts) do
+    with :ok <- validate_governed_options(opts),
+         :ok <- validate_auth_modes(opts),
+         {:ok, opts} <- normalize_governed_authority(opts) do
       normalize_provider_shortcuts(opts)
     end
   end
@@ -85,6 +97,12 @@ defmodule LinearSDK.Client do
     modes = present_auth_modes(opts)
 
     cond do
+      :governed_authority in modes and length(modes) > 1 ->
+        {:error,
+         ArgumentError.exception(
+           "pass either :governed_authority or standalone auth options, not both"
+         )}
+
       :auth in modes and length(modes) > 1 ->
         {:error,
          ArgumentError.exception(
@@ -106,8 +124,77 @@ defmodule LinearSDK.Client do
   end
 
   defp present_auth_modes(opts) do
-    [:auth, :oauth2, :api_key, :access_token]
+    [:auth, :oauth2, :api_key, :access_token, :governed_authority]
     |> Enum.filter(&Keyword.has_key?(opts, &1))
+  end
+
+  defp validate_governed_options(opts) do
+    if Keyword.has_key?(opts, :governed_authority) do
+      case forbidden_governed_construction_key(opts) do
+        nil -> :ok
+        key -> {:error, governed_construction_error(key)}
+      end
+    else
+      :ok
+    end
+  end
+
+  defp forbidden_governed_construction_key(opts) do
+    Enum.find_value(opts, fn
+      {:governed_authority, _value} ->
+        nil
+
+      {key, _value} ->
+        if key in forbidden_governed_construction_keys(), do: key
+
+      _entry ->
+        nil
+    end)
+  end
+
+  defp forbidden_governed_construction_keys do
+    [
+      :api_key,
+      :access_token,
+      :auth,
+      :oauth2,
+      :base_url,
+      :headers,
+      :oauth_token_path,
+      :token_source,
+      :oauth_app_user,
+      :oauth_app_user_id,
+      :webhook_secret,
+      :webhook_signing_secret,
+      :agent_session_identity,
+      :agent_session_user_id
+    ]
+  end
+
+  defp governed_construction_error(key) do
+    ArgumentError.exception(
+      "governed Linear clients cannot accept #{key}; use governed_authority"
+    )
+  end
+
+  defp normalize_governed_authority(opts) do
+    case Keyword.fetch(opts, :governed_authority) do
+      {:ok, authority} ->
+        with {:ok, authority} <- GovernedAuthority.new(authority) do
+          {:ok, Keyword.put(opts, :governed_authority, GovernedAuthority.to_prismatic(authority))}
+        end
+
+      :error ->
+        {:ok, opts}
+    end
+  end
+
+  defp maybe_put_default_base_url(opts) do
+    if Keyword.has_key?(opts, :governed_authority) do
+      opts
+    else
+      Keyword.put_new(opts, :base_url, @default_base_url)
+    end
   end
 
   defp normalize_provider_shortcuts(opts) do
@@ -150,5 +237,91 @@ defmodule LinearSDK.Client do
       _other ->
         {:error, ArgumentError.exception("#{inspect(key)} must be a string")}
     end
+  end
+
+  defp reject_governed_request_options(runtime, opts) do
+    if governed_runtime?(runtime) do
+      case forbidden_governed_request_key(opts) do
+        nil -> :ok
+        key -> {:error, key}
+      end
+    else
+      :ok
+    end
+  end
+
+  defp governed_runtime?(runtime) do
+    match?(%Prismatic.GovernedAuthority{}, runtime.context.governed_authority)
+  end
+
+  defp forbidden_governed_request_key(opts) when is_list(opts) do
+    Enum.find_value(opts, fn
+      {key, _value} ->
+        if key in forbidden_governed_request_keys(), do: key
+
+      _entry ->
+        nil
+    end)
+  end
+
+  defp forbidden_governed_request_key(_opts), do: nil
+
+  defp forbidden_governed_request_keys do
+    [
+      :headers,
+      "headers",
+      :authorization,
+      "authorization",
+      :auth,
+      "auth",
+      :oauth2,
+      "oauth2",
+      :base_url,
+      "base_url",
+      :url,
+      "url",
+      :endpoint,
+      "endpoint",
+      :endpoint_url,
+      "endpoint_url",
+      :operation_policy,
+      "operation_policy",
+      :operation_policy_ref,
+      "operation_policy_ref",
+      :oauth_app_user,
+      "oauth_app_user",
+      :oauth_app_user_id,
+      "oauth_app_user_id",
+      :webhook_secret,
+      "webhook_secret",
+      :webhook_signing_secret,
+      "webhook_signing_secret",
+      :agent_session_identity,
+      "agent_session_identity",
+      :agent_session_user_id,
+      "agent_session_user_id"
+    ]
+  end
+
+  defp prismatic_governed_request_error(key) do
+    %Prismatic.Error{
+      type: :auth,
+      message: "Governed Linear request used unmanaged request options",
+      status: nil,
+      graphql_errors: nil,
+      request_id: nil,
+      details: %{reason: {:governed_request_option_forbidden, key}}
+    }
+  end
+
+  defp linear_governed_request_error(key) do
+    %LinearSDK.Error{
+      type: :auth,
+      message: "Governed Linear request used unmanaged request options",
+      status: nil,
+      graphql_errors: nil,
+      request_id: nil,
+      details: %{reason: {:governed_request_option_forbidden, key}}
+    }
   end
 end

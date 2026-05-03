@@ -46,6 +46,26 @@ client =
   )
 ```
 
+Those examples are standalone Linear clients. Governed clients use an explicit
+authority packet instead of `LINEAR_API_KEY`, OAuth env vars, saved token files,
+direct headers, or request-level endpoint overrides:
+
+```elixir
+authority =
+  LinearSDK.GovernedAuthority.new!(
+    credential_ref: "credential://linear/workspace/main",
+    credential_lease_ref: "lease://linear/workspace/main",
+    target_ref: "target://linear/workspace/main",
+    operation_policy_ref: "operation-policy://linear/read",
+    redaction_ref: "redaction://linear/default"
+  )
+
+client =
+  LinearSDK.Client.new!(
+    governed_authority: authority
+  )
+```
+
 To create that file interactively:
 
 ```bash

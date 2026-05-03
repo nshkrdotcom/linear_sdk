@@ -143,7 +143,13 @@ defmodule LinearSDK.MixProject do
         assets
         mix.exs
         examples
-        guides
+        guides/getting-started.md
+        guides/client-configuration.md
+        guides/oauth-and-token-management.md
+        guides/real-linear-usage.md
+        guides/executing-graphql-documents.md
+        guides/generation-and-verification.md
+        guides/upstream-artifacts.md
       ),
       licenses: ["MIT"],
       links: %{
@@ -210,6 +216,7 @@ defmodule LinearSDK.MixProject do
   defp groups_for_modules do
     [
       {"Core", [LinearSDK, LinearSDK.Client, LinearSDK.Response, LinearSDK.Error]},
+      {"Governed Authority", [LinearSDK.GovernedAuthority]},
       {"Auth", [LinearSDK.OAuth, LinearSDK.OAuthTokenFile]},
       generated_module_group("Queries", "queries"),
       generated_module_group("Mutations", "mutations"),

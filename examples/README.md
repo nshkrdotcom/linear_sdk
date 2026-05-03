@@ -30,6 +30,11 @@ or by saving a token file first:
 mix linear.oauth --save --manual --no-browser
 ```
 
+Those are standalone example credentials. Governed Linear clients are not
+created from these env vars, saved token files, direct headers, webhook
+secrets, OAuth app-user values, or agent-session identity values. Governed
+execution starts only from `LinearSDK.GovernedAuthority`.
+
 This repo now has both:
 
 - operator helpers such as `mix linear.oauth` and `examples/run_all.sh --oauth`

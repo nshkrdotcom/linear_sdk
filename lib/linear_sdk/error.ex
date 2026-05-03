@@ -12,7 +12,7 @@ defmodule LinearSDK.Error do
   defexception [:type, :message, :status, :graphql_errors, :request_id, :details]
 
   @type t :: %__MODULE__{
-          type: :transport | :http | :graphql,
+          type: :transport | :http | :graphql | :auth,
           message: String.t(),
           status: pos_integer() | nil,
           graphql_errors: list() | nil,

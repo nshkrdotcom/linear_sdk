@@ -128,6 +128,38 @@ oauth_client =
   )
 ```
 
+Those env-backed examples are standalone operator conveniences only. They do
+not satisfy governed authority.
+
+For governed execution, pass an explicit authority packet. The SDK does not
+read `LINEAR_API_KEY`, OAuth env vars, saved token files, request headers, a
+direct base URL, webhook secrets, or agent-session identity values to construct
+governed authority:
+
+```elixir
+authority =
+  LinearSDK.GovernedAuthority.new!(
+    credential_ref: "credential://linear/workspace/main",
+    credential_lease_ref: "lease://linear/workspace/main",
+    target_ref: "target://linear/workspace/main",
+    operation_policy_ref: "operation-policy://linear/read",
+    redaction_ref: "redaction://linear/default",
+    workspace_ref: "workspace://linear/default",
+    oauth_app_user_ref: "oauth-app-user://linear/app-user",
+    webhook_ref: "webhook://linear/default",
+    agent_session_ref: "agent-session://linear/default"
+  )
+
+client =
+  LinearSDK.Client.new!(
+    governed_authority: authority
+  )
+```
+
+Generated API docs may describe Linear-owned OAuth app user, webhook, and agent
+session schema fields. Those generated descriptions are provider schema
+reference only; governed credentials still come only from `governed_authority:`.
+
 For provider-local OAuth helpers:
 
 ```elixir
@@ -352,6 +384,7 @@ API reference is published under the `Modules` tab in HexDocs:
 - `LinearSDK.Unions`
 - `LinearSDK.Enums`
 - `LinearSDK.Scalars`
+- `LinearSDK.GovernedAuthority`
 
 ## Generation Tasks
 

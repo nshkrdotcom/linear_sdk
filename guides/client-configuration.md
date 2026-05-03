@@ -66,6 +66,41 @@ authorization flow and persists the resulting token for runtime use.
 
 Do not pass `oauth2:` together with `api_key:`, `access_token:`, or `auth:`.
 
+## Governed Authority
+
+Standalone auth modes are intentionally separate from governed execution.
+`api_key:`, `access_token:`, `auth:`, `oauth2:`, saved token files, Linear env
+vars, direct `base_url:`, request headers, webhook secrets, OAuth app-user
+values, and unmanaged agent-session identity values are standalone inputs only.
+They are rejected when `governed_authority:` is present.
+
+Use governed authority when a control plane has already selected the Linear
+workspace, credential lease, target, operation policy, and redaction policy:
+
+```elixir
+authority =
+  LinearSDK.GovernedAuthority.new!(
+    credential_ref: "credential://linear/workspace/main",
+    credential_lease_ref: "lease://linear/workspace/main",
+    target_ref: "target://linear/workspace/main",
+    operation_policy_ref: "operation-policy://linear/read",
+    redaction_ref: "redaction://linear/default",
+    workspace_ref: "workspace://linear/default",
+    oauth_app_user_ref: "oauth-app-user://linear/app-user",
+    webhook_ref: "webhook://linear/default",
+    agent_session_ref: "agent-session://linear/default"
+  )
+
+client =
+  LinearSDK.Client.new!(
+    governed_authority: authority
+  )
+```
+
+Generated Linear schema docs may mention OAuth app users, webhooks, and agent
+sessions because they are first-class Linear graph entities. Those generated
+schema descriptions are not governed credential sources.
+
 ## Transport Overrides
 
 You can override the transport for tests:
