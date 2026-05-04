@@ -53,11 +53,22 @@ direct headers, or request-level endpoint overrides:
 ```elixir
 authority =
   LinearSDK.GovernedAuthority.new!(
-    credential_ref: "credential://linear/workspace/main",
-    credential_lease_ref: "lease://linear/workspace/main",
-    target_ref: "target://linear/workspace/main",
+    tenant_ref: "tenant://tenant-1",
+    workspace_ref: "workspace://tenant-1/linear/default",
+    organization_ref: "organization://linear/org-1",
+    provider_account_ref: "provider-account://tenant-1/linear/api-token",
+    connector_instance_ref: "connector-instance://tenant-1/linear/default",
+    credential_handle_ref: "credential-handle://tenant-1/linear/api-token",
+    credential_lease_ref: "credential-lease://tenant-1/linear/api-token",
+    target_ref: "target://tenant-1/linear/graphql",
+    request_scope_ref: "request-scope://tenant-1/linear/viewer",
     operation_policy_ref: "operation-policy://linear/read",
-    redaction_ref: "redaction://linear/default"
+    operation_name: "Viewer",
+    operation_document_ref: "graphql-document://tenant-1/linear/viewer",
+    allowed_variable_names: [],
+    identity_kind: "api_token",
+    redaction_ref: "redaction://linear/default",
+    credential_headers: [{"authorization", "[REDACTED_BY_AUTHORITY]"}]
   )
 
 client =
