@@ -20,12 +20,7 @@ defmodule LinearSDK.SourceCompatibilityTest do
   test "hex packaging commands resolve published runtime deps without tooling deps", %{
     tmp_dir: tmp_dir
   } do
-    probe_module =
-      Module.concat([
-        LinearSDK,
-        TestSupport,
-        "MixProjectProbe#{System.unique_integer([:positive])}"
-      ])
+    probe_module = LinearSDK.TestSupport.MixProjectProbe
 
     mix_path = Path.join([tmp_dir, "standalone", "linear_sdk", "mix.exs"])
 
@@ -34,7 +29,7 @@ defmodule LinearSDK.SourceCompatibilityTest do
 
     assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
 
-    deps = probe_module.project()[:deps]
+    deps = project_deps(probe_module)
 
     assert {:prismatic, "~> 0.2.0"} = find_dependency!(deps, :prismatic)
     refute dependency_present?(deps, :prismatic_codegen)
@@ -49,12 +44,7 @@ defmodule LinearSDK.SourceCompatibilityTest do
   test "mix deps.get keeps sibling workspace paths available", %{
     tmp_dir: tmp_dir
   } do
-    probe_module =
-      Module.concat([
-        LinearSDK,
-        TestSupport,
-        "MixProjectWorkspaceProbe#{System.unique_integer([:positive])}"
-      ])
+    probe_module = LinearSDK.TestSupport.MixProjectWorkspaceProbe
 
     mix_path = Path.join([tmp_dir, "standalone", "linear_sdk", "mix.exs"])
 
@@ -67,7 +57,7 @@ defmodule LinearSDK.SourceCompatibilityTest do
 
     assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
 
-    deps = probe_module.project()[:deps]
+    deps = project_deps(probe_module)
 
     assert {:prismatic, opts} = find_dependency!(deps, :prismatic)
     assert opts[:path] == prismatic_runtime_path
@@ -127,6 +117,12 @@ defmodule LinearSDK.SourceCompatibilityTest do
       {^app, opts} when is_list(opts) -> true
       _other -> false
     end)
+  end
+
+  defp project_deps(module) do
+    module
+    |> :erlang.apply(:project, [])
+    |> Keyword.fetch!(:deps)
   end
 
   defp restore_mix_project_stack(original_project) do

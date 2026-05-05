@@ -31,7 +31,8 @@ defmodule LinearSDK.SourcePolicyTest do
     "Reg" <> "Exp",
     "reg" <> "exp",
     "re." <> "compile",
-    "import " <> "re"
+    "import " <> "re",
+    "Module." <> "concat"
   ]
 
   test "active handwritten source avoids dynamic atom conversion and pattern engines" do

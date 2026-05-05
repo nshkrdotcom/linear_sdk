@@ -246,9 +246,39 @@ defmodule LinearSDK.MixProject do
     |> Path.rootname()
     |> Path.split()
     |> Enum.drop(1)
-    |> Enum.map(&Macro.camelize/1)
-    |> Module.concat()
+    |> Enum.map(&module_segment!/1)
+    |> then(&:erlang.apply(Module, :concat, [&1]))
   end
+
+  defp module_segment!(segment) do
+    segment
+    |> Macro.camelize()
+    |> validate_module_segment!(segment)
+  end
+
+  defp validate_module_segment!(segment, original) do
+    if valid_module_segment?(segment) do
+      segment
+    else
+      raise ArgumentError,
+            "invalid generated docs module segment #{inspect(original)} resolved to #{inspect(segment)}"
+    end
+  end
+
+  defp valid_module_segment?(<<first, rest::binary>>) when first in ?A..?Z do
+    valid_module_segment_rest?(rest)
+  end
+
+  defp valid_module_segment?(_segment), do: false
+
+  defp valid_module_segment_rest?(<<>>), do: true
+
+  defp valid_module_segment_rest?(<<char, rest::binary>>)
+       when char in ?A..?Z or char in ?a..?z or char in ?0..?9 do
+    valid_module_segment_rest?(rest)
+  end
+
+  defp valid_module_segment_rest?(_rest), do: false
 
   defp publishing_package? do
     Enum.any?(System.argv(), &(&1 in ["hex.build", "hex.publish"]))

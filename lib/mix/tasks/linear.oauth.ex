@@ -182,7 +182,7 @@ defmodule Mix.Tasks.Linear.Oauth do
       Application.get_env(
         :linear_sdk,
         :oauth_interactive_module,
-        Module.concat([Prismatic, OAuth2, Interactive])
+        Prismatic.OAuth2.Interactive
       )
   end
 
@@ -197,7 +197,7 @@ defmodule Mix.Tasks.Linear.Oauth do
   end
 
   defp saved_token_module do
-    Module.concat([Prismatic, OAuth2, SavedToken])
+    Prismatic.OAuth2.SavedToken
   end
 
   defp fetch_env!(name) do
@@ -289,7 +289,7 @@ defmodule Mix.Tasks.Linear.Oauth do
   end
 
   defp token_source_module do
-    Module.concat([Prismatic, Adapters, TokenSource, File])
+    Prismatic.Adapters.TokenSource.File
   end
 
   defp system_module do
