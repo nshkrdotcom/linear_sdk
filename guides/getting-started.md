@@ -60,6 +60,8 @@ authority =
     connector_instance_ref: "connector-instance://tenant-1/linear/default",
     credential_handle_ref: "credential-handle://tenant-1/linear/api-token",
     credential_lease_ref: "credential-lease://tenant-1/linear/api-token",
+    token_family_ref: "token-family://tenant-1/linear/api-token",
+    subject_ref: "subject://tenant-1/linear/api-token",
     target_ref: "target://tenant-1/linear/graphql",
     request_scope_ref: "request-scope://tenant-1/linear/viewer",
     operation_policy_ref: "operation-policy://linear/read",
