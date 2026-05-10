@@ -1,9 +1,7 @@
-Code.require_file("build_support/dependency_resolver.exs", __DIR__)
+Code.require_file("build_support/dependency_sources.exs", __DIR__)
 
 defmodule LinearSDK.MixProject do
   use Mix.Project
-
-  alias LinearSDK.Build.DependencyResolver
 
   @version "0.2.0"
   @source_url "https://github.com/nshkrdotcom/linear_sdk"
@@ -59,25 +57,14 @@ defmodule LinearSDK.MixProject do
   end
 
   defp prismatic_runtime_dep do
-    case prismatic_runtime_path() do
-      nil -> {:prismatic, "~> 0.2.0"}
-      path -> {:prismatic, path: path}
-    end
-  end
-
-  defp prismatic_runtime_path do
-    if include_workspace_paths?() do
-      path = Path.expand("../prismatic/apps/prismatic_runtime", __DIR__)
-
-      if File.dir?(path), do: path
-    end
+    DependencySources.dep(:prismatic, __DIR__)
   end
 
   defp codegen_deps do
     if include_tooling_deps?() do
       [
-        DependencyResolver.prismatic_codegen(only: [:dev, :test], runtime: false),
-        DependencyResolver.prismatic_provider_testkit(only: :test, runtime: false)
+        DependencySources.dep(:prismatic_codegen, __DIR__, only: [:dev, :test], runtime: false),
+        DependencySources.dep(:prismatic_provider_testkit, __DIR__, only: :test, runtime: false)
       ]
     else
       []
@@ -131,7 +118,8 @@ defmodule LinearSDK.MixProject do
       name: "linear_sdk",
       description: description(),
       files: ~w(
-        build_support/dependency_resolver.exs
+        build_support/dependency_sources.config.exs
+        build_support/dependency_sources.exs
         build_support/docs_assertions.exs
         lib
         codegen
@@ -285,10 +273,6 @@ defmodule LinearSDK.MixProject do
   end
 
   defp include_tooling_deps? do
-    not publishing_package?() and not installing_as_dependency?()
-  end
-
-  defp include_workspace_paths? do
     not publishing_package?() and not installing_as_dependency?()
   end
 

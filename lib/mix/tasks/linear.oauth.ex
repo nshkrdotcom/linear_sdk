@@ -5,10 +5,10 @@ defmodule Mix.Tasks.Linear.Oauth do
 
   Preferred first-run path:
 
-      export LINEAR_OAUTH_CLIENT_ID="..."
-      export LINEAR_OAUTH_CLIENT_SECRET="..."
-      export LINEAR_OAUTH_REDIRECT_URI="http://127.0.0.1:40071/callback"
-      mix linear.oauth --save --manual --no-browser
+      mix linear.oauth --save --manual --no-browser \\
+        --client-id="..." \\
+        --client-secret="..." \\
+        --redirect-uri="http://127.0.0.1:40071/callback"
 
   Add explicit scopes only when you need more than the default read token:
 
@@ -21,6 +21,7 @@ defmodule Mix.Tasks.Linear.Oauth do
       mix linear.oauth --manual
       mix linear.oauth --no-browser
       mix linear.oauth --actor=app
+      mix linear.oauth --client-id=... --client-secret=...
       mix linear.oauth --save --path=/tmp/linear-oauth.json
       mix linear.oauth --redirect-uri=http://127.0.0.1:40071/callback
       mix linear.oauth --scope read --scope write
@@ -39,6 +40,8 @@ defmodule Mix.Tasks.Linear.Oauth do
 
   @interactive_switches [
     actor: :string,
+    client_id: :string,
+    client_secret: :string,
     manual: :boolean,
     no_browser: :boolean,
     path: :string,
@@ -48,8 +51,14 @@ defmodule Mix.Tasks.Linear.Oauth do
     timeout: :integer
   ]
 
-  @refresh_switches [path: :string]
-  @client_credentials_switches [path: :string, save: :boolean, scope: :keep]
+  @refresh_switches [client_id: :string, client_secret: :string, path: :string]
+  @client_credentials_switches [
+    client_id: :string,
+    client_secret: :string,
+    path: :string,
+    save: :boolean,
+    scope: :keep
+  ]
 
   @shortdoc "Complete the interactive Linear OAuth flow"
 
@@ -87,9 +96,12 @@ defmodule Mix.Tasks.Linear.Oauth do
       Mix.raise("invalid options: #{format_invalid_options(invalid)}")
     end
 
-    client_id = fetch_env!("LINEAR_OAUTH_CLIENT_ID")
-    client_secret = optional_env("LINEAR_OAUTH_CLIENT_SECRET")
-    redirect_uri = opts[:redirect_uri] || fetch_env!("LINEAR_OAUTH_REDIRECT_URI")
+    client_id = required_oauth_value(opts, :client_id, :oauth_client_id, "--client-id")
+    client_secret = optional_oauth_value(opts, :client_secret, :oauth_client_secret)
+
+    redirect_uri =
+      opts[:redirect_uri] || required_config_value(:oauth_redirect_uri, "--redirect-uri")
+
     timeout_ms = opts[:timeout] || @default_timeout_ms
     open_browser? = not Keyword.get(opts, :no_browser, false)
     manual? = Keyword.get(opts, :manual, false)
@@ -119,8 +131,11 @@ defmodule Mix.Tasks.Linear.Oauth do
   end
 
   defp request_client_credentials_token(opts) do
-    client_id = fetch_env!("LINEAR_OAUTH_CLIENT_ID")
-    client_secret = fetch_env!("LINEAR_OAUTH_CLIENT_SECRET")
+    client_id = required_oauth_value(opts, :client_id, :oauth_client_id, "--client-id")
+
+    client_secret =
+      required_oauth_value(opts, :client_secret, :oauth_client_secret, "--client-secret")
+
     scopes = Keyword.get_values(opts, :scope)
 
     case oauth_module().client_credentials(
@@ -138,8 +153,8 @@ defmodule Mix.Tasks.Linear.Oauth do
   end
 
   defp refresh_saved_token(opts) do
-    client_id = fetch_env!("LINEAR_OAUTH_CLIENT_ID")
-    client_secret = optional_env("LINEAR_OAUTH_CLIENT_SECRET")
+    client_id = required_oauth_value(opts, :client_id, :oauth_client_id, "--client-id")
+    client_secret = optional_oauth_value(opts, :client_secret, :oauth_client_secret)
     path = save_path(opts)
 
     refresh_opts =
@@ -200,17 +215,30 @@ defmodule Mix.Tasks.Linear.Oauth do
     Prismatic.OAuth2.SavedToken
   end
 
-  defp fetch_env!(name) do
-    case system_module().get_env(name) do
-      value when is_binary(value) and value != "" -> value
-      _other -> Mix.raise("missing required environment variable #{name}")
+  defp required_oauth_value(opts, option_key, config_key, option_name) do
+    case optional_oauth_value(opts, option_key, config_key) do
+      value when is_binary(value) and value != "" ->
+        value
+
+      _other ->
+        Mix.raise("missing required OAuth value #{option_name} or :linear_sdk, #{config_key}")
     end
   end
 
-  defp optional_env(name) do
-    case system_module().get_env(name) do
+  defp optional_oauth_value(opts, option_key, config_key) do
+    case Keyword.get(opts, option_key) || Application.get_env(:linear_sdk, config_key) do
       value when is_binary(value) and value != "" -> value
       _other -> nil
+    end
+  end
+
+  defp required_config_value(config_key, option_name) do
+    case Application.get_env(:linear_sdk, config_key) do
+      value when is_binary(value) and value != "" ->
+        value
+
+      _other ->
+        Mix.raise("missing required OAuth value #{option_name} or :linear_sdk, #{config_key}")
     end
   end
 
@@ -272,9 +300,13 @@ defmodule Mix.Tasks.Linear.Oauth do
   defp save_enabled?(opts), do: Keyword.get(opts, :save, false)
 
   defp save_path(opts) do
-    opts
-    |> Keyword.get(:path, default_save_path())
-    |> Path.expand()
+    path = Keyword.get(opts, :path) || Application.get_env(:linear_sdk, :oauth_token_path)
+
+    if is_binary(path) and path != "" do
+      Path.expand(path)
+    else
+      default_save_path()
+    end
   end
 
   defp default_save_path do
@@ -290,11 +322,6 @@ defmodule Mix.Tasks.Linear.Oauth do
 
   defp token_source_module do
     Prismatic.Adapters.TokenSource.File
-  end
-
-  defp system_module do
-    Process.get(:linear_sdk_system_module) ||
-      Application.get_env(:linear_sdk, :system_module, LinearSDK.System)
   end
 
   defp actor_params(nil), do: []

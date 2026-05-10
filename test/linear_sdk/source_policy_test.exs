@@ -50,8 +50,12 @@ defmodule LinearSDK.SourcePolicyTest do
     @source_globs
     |> Enum.flat_map(fn glob -> Path.wildcard(Path.join(@repo_root, glob)) end)
     |> Enum.uniq()
-    |> Enum.reject(&generated_or_build_path?/1)
+    |> Enum.reject(&(canonical_dependency_helper?(&1) or generated_or_build_path?(&1)))
     |> Enum.sort()
+  end
+
+  defp canonical_dependency_helper?(path) do
+    Path.relative_to(path, @repo_root) == "build_support/dependency_sources.exs"
   end
 
   defp generated_or_build_path?(path) do

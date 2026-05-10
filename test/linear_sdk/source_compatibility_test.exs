@@ -51,7 +51,15 @@ defmodule LinearSDK.SourceCompatibilityTest do
     prismatic_runtime_path =
       Path.join([tmp_dir, "standalone", "prismatic", "apps", "prismatic_runtime"])
 
+    prismatic_codegen_path =
+      Path.join([tmp_dir, "standalone", "prismatic", "apps", "prismatic_codegen"])
+
+    prismatic_provider_testkit_path =
+      Path.join([tmp_dir, "standalone", "prismatic", "apps", "prismatic_provider_testkit"])
+
     File.mkdir_p!(prismatic_runtime_path)
+    File.mkdir_p!(prismatic_codegen_path)
+    File.mkdir_p!(prismatic_provider_testkit_path)
     write_transformed_mix_exs!(mix_path, probe_module)
     System.argv(["deps.get"])
 
@@ -60,19 +68,15 @@ defmodule LinearSDK.SourceCompatibilityTest do
     deps = project_deps(probe_module)
 
     assert {:prismatic, opts} = find_dependency!(deps, :prismatic)
-    assert opts[:path] == prismatic_runtime_path
+    assert resolved_path(opts[:path], mix_path) == prismatic_runtime_path
 
     assert {:prismatic_codegen, opts} = find_dependency!(deps, :prismatic_codegen)
-
-    assert opts[:path] ==
-             Path.join(@project_root, "../prismatic/apps/prismatic_codegen") |> Path.expand()
+    assert resolved_path(opts[:path], mix_path) == prismatic_codegen_path
 
     assert {:prismatic_provider_testkit, opts} =
              find_dependency!(deps, :prismatic_provider_testkit)
 
-    assert opts[:path] ==
-             Path.join(@project_root, "../prismatic/apps/prismatic_provider_testkit")
-             |> Path.expand()
+    assert resolved_path(opts[:path], mix_path) == prismatic_provider_testkit_path
 
     on_exit(fn ->
       :code.purge(probe_module)
@@ -81,14 +85,15 @@ defmodule LinearSDK.SourceCompatibilityTest do
   end
 
   defp write_transformed_mix_exs!(path, probe_module) do
-    dependency_resolver_path = Path.join(@project_root, "build_support/dependency_resolver.exs")
+    dependency_sources_path = Path.join(@project_root, "build_support/dependency_sources.exs")
+    build_support_path = Path.join(Path.dirname(path), "build_support")
 
     source =
       Path.join(@project_root, "mix.exs")
       |> File.read!()
       |> String.replace(
-        "Code.require_file(\"build_support/dependency_resolver.exs\", __DIR__)",
-        "Code.require_file(#{inspect(dependency_resolver_path)})",
+        "Code.require_file(\"build_support/dependency_sources.exs\", __DIR__)",
+        "Code.require_file(#{inspect(dependency_sources_path)})",
         global: false
       )
       |> String.replace(
@@ -97,7 +102,13 @@ defmodule LinearSDK.SourceCompatibilityTest do
         global: false
       )
 
-    File.mkdir_p!(Path.dirname(path))
+    File.mkdir_p!(build_support_path)
+
+    File.cp!(
+      Path.join(@project_root, "build_support/dependency_sources.config.exs"),
+      Path.join(build_support_path, "dependency_sources.config.exs")
+    )
+
     File.write!(path, source)
   end
 
@@ -124,6 +135,8 @@ defmodule LinearSDK.SourceCompatibilityTest do
     |> :erlang.apply(:project, [])
     |> Keyword.fetch!(:deps)
   end
+
+  defp resolved_path(path, mix_path), do: Path.expand(path, Path.dirname(mix_path))
 
   defp restore_mix_project_stack(original_project) do
     case Mix.Project.get() do

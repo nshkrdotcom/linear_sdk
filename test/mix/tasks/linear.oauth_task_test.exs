@@ -68,11 +68,6 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
   end
 
   defmodule FakeSystem do
-    def get_env(name) do
-      Process.get(:linear_oauth_task_env, %{})
-      |> Map.get(name)
-    end
-
     def user_home! do
       Process.get(:linear_oauth_task_user_home, "/fake-home")
     end
@@ -87,14 +82,14 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
     Process.put(:linear_sdk_oauth_module, FakeOAuth)
     Process.put(:linear_sdk_oauth2_module, FakeOAuth2)
     Process.put(:linear_sdk_system_module, FakeSystem)
-    Process.put(:linear_oauth_task_env, default_env())
+    previous_config = put_default_oauth_config()
 
     on_exit(fn ->
+      restore_oauth_config(previous_config)
       Process.delete(:linear_sdk_oauth_interactive_module)
       Process.delete(:linear_sdk_oauth_module)
       Process.delete(:linear_sdk_oauth2_module)
       Process.delete(:linear_sdk_system_module)
-      Process.delete(:linear_oauth_task_env)
       Process.delete(:linear_oauth_task_user_home)
       Process.delete(:linear_oauth_task_result)
       Process.delete(:linear_oauth_client_credentials_result)
@@ -106,7 +101,7 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
     :ok
   end
 
-  test "loads oauth credentials from env and passes manual mode flags, actor, and scopes through" do
+  test "loads oauth credentials from config and passes manual mode flags, actor, and scopes through" do
     OAuthTask.run([
       "--manual",
       "--no-browser",
@@ -129,7 +124,7 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
     assert opts[:scopes] == ["read", "write"]
   end
 
-  test "lets --redirect-uri override the environment for loopback mode" do
+  test "lets --redirect-uri override configured redirect URI for loopback mode" do
     OAuthTask.run(["--redirect-uri=http://127.0.0.1:40123/callback"])
 
     assert_receive {:interactive_authorize, _provider, opts}
@@ -155,7 +150,7 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
   end
 
   test "saves tokens to the default XDG path when requested", %{tmp_dir: tmp_dir} do
-    put_fake_env("XDG_CONFIG_HOME", tmp_dir)
+    put_fake_config("XDG_CONFIG_HOME", tmp_dir)
 
     OAuthTask.run(["--save"])
 
@@ -179,7 +174,7 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
     tmp_dir: tmp_dir
   } do
     path = Path.join(tmp_dir, "env-linear-token.json")
-    put_fake_env("LINEAR_OAUTH_TOKEN_PATH", path)
+    put_fake_config("LINEAR_OAUTH_TOKEN_PATH", path)
 
     OAuthTask.run(["--save"])
 
@@ -245,18 +240,36 @@ defmodule Mix.Tasks.Linear.OAuthTaskTest do
     assert_receive {:mix_shell, :info, ["export LINEAR_OAUTH_ACCESS_TOKEN=\"app_access\""]}
   end
 
-  defp default_env do
-    %{
-      "LINEAR_OAUTH_CLIENT_ID" => "client-id",
-      "LINEAR_OAUTH_CLIENT_SECRET" => "client-secret",
-      "LINEAR_OAUTH_REDIRECT_URI" => "http://127.0.0.1:40071/callback"
-    }
+  defp put_default_oauth_config do
+    keys = [
+      :oauth_client_id,
+      :oauth_client_secret,
+      :oauth_redirect_uri,
+      :oauth_token_path,
+      :oauth_config_home
+    ]
+
+    previous = Map.new(keys, &{&1, Application.fetch_env(:linear_sdk, &1)})
+
+    Application.put_env(:linear_sdk, :oauth_client_id, "client-id")
+    Application.put_env(:linear_sdk, :oauth_client_secret, "client-secret")
+    Application.put_env(:linear_sdk, :oauth_redirect_uri, "http://127.0.0.1:40071/callback")
+
+    previous
   end
 
-  defp put_fake_env(name, value) do
-    Process.put(
-      :linear_oauth_task_env,
-      Map.put(Process.get(:linear_oauth_task_env, default_env()), name, value)
-    )
+  defp restore_oauth_config(previous) do
+    Enum.each(previous, fn
+      {key, {:ok, value}} -> Application.put_env(:linear_sdk, key, value)
+      {key, :error} -> Application.delete_env(:linear_sdk, key)
+    end)
+  end
+
+  defp put_fake_config("XDG_CONFIG_HOME", value) do
+    Application.put_env(:linear_sdk, :oauth_config_home, value)
+  end
+
+  defp put_fake_config("LINEAR_OAUTH_TOKEN_PATH", value) do
+    Application.put_env(:linear_sdk, :oauth_token_path, value)
   end
 end
