@@ -2,17 +2,18 @@
 
 ## Project Structure
 - `lib/` contains public `LinearSDK` modules.
-- `codegen/` and `build_support/` support GraphQL generation and dependency resolution.
+- `codegen/` and `build_support/` support GraphQL generation and documentation checks.
 - `test/` contains ExUnit coverage.
 - `doc/` is generated output and should not be edited.
 
 ## Execution Plane Stack
 - `linear_sdk` consumes `prismatic` as the semantic GraphQL runtime; do not reach into raw `execution_plane` internals.
-- Dependency source selection is handled by `build_support/dependency_sources.exs` and `build_support/dependency_sources.config.exs`.
-- Local dependency overrides use `.dependency_sources.local.exs`.
-- Default dependency priority is `path -> GitHub -> Hex`; publish mode is Hex-only and must fail with exact blockers if an internal dep is unavailable on Hex.
-- Dependency source selection must not use environment variables.
-- Weld maintains helper drift, manifests, clone checks, publish checks, and publish order, but this repo is not a Weld consumer in this pass and must not receive a blind Weld dependency.
+- Cross-repository dependencies keep ordinary committed tuples in `mix.exs`. During a
+  managed invocation, the small `workspace_dep/1` carrier lets Mix Workspace Ops replace
+  source coordinates from the portfolio registry.
+- Do not add a repository-local source resolver, override file, or source-selection
+  environment variable. This repo is not a Weld consumer and must not receive a blind
+  Weld dependency.
 
 ## Runtime Environment
 - Runtime application code under `lib/**` must not call direct OS env APIs such as `System.get_env`, `System.fetch_env`, `System.put_env`, or `System.delete_env`.

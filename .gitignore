@@ -8,7 +8,6 @@
 *.beam
 /.DS_Store
 /tmp/
-.dependency_sources.local.exs
 
 # Nested example project artifacts
 examples/_output/

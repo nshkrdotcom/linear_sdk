@@ -1,6 +1,4 @@
-unless Code.ensure_loaded?(DependencySources) do
-  Code.require_file("build_support/dependency_sources.exs", __DIR__)
-end
+if bootstrap = System.get_env("MIX_WORKSPACE_OPS_BOOTSTRAP"), do: Code.require_file(bootstrap)
 
 defmodule LinearSDK.MixProject do
   use Mix.Project
@@ -46,7 +44,7 @@ defmodule LinearSDK.MixProject do
 
   defp deps do
     [
-      prismatic_runtime_dep(),
+      workspace_dep({:prismatic, "~> 0.2.0"}),
       codegen_deps(),
       {:jason, "~> 1.4"},
       {:telemetry, "~> 1.4"},
@@ -58,15 +56,26 @@ defmodule LinearSDK.MixProject do
     |> List.flatten()
   end
 
-  defp prismatic_runtime_dep do
-    DependencySources.dep(:prismatic, __DIR__)
-  end
-
   defp codegen_deps do
     if include_tooling_deps?() do
       [
-        DependencySources.dep(:prismatic_codegen, __DIR__, only: [:dev, :test], runtime: false),
-        DependencySources.dep(:prismatic_provider_testkit, __DIR__, only: :test, runtime: false)
+        workspace_dep(
+          {:prismatic_codegen,
+           github: "nshkrdotcom/prismatic",
+           branch: "main",
+           subdir: "apps/prismatic_codegen",
+           override: true,
+           only: [:dev, :test],
+           runtime: false}
+        ),
+        workspace_dep(
+          {:prismatic_provider_testkit,
+           github: "nshkrdotcom/prismatic",
+           branch: "main",
+           subdir: "apps/prismatic_provider_testkit",
+           only: :test,
+           runtime: false}
+        )
       ]
     else
       []
@@ -120,8 +129,6 @@ defmodule LinearSDK.MixProject do
       name: "linear_sdk",
       description: description(),
       files: ~w(
-        build_support/dependency_sources.config.exs
-        build_support/dependency_sources.exs
         build_support/docs_assertions.exs
         lib
         codegen
@@ -275,10 +282,16 @@ defmodule LinearSDK.MixProject do
   end
 
   defp include_tooling_deps? do
-    not publishing_package?() and not installing_as_dependency?()
+    not (publishing_package?() or installing_as_dependency?())
   end
 
   defp installing_as_dependency? do
     Enum.member?(Path.split(__DIR__), "deps")
+  end
+
+  defp workspace_dep(committed) do
+    if function_exported?(MixWorkspaceOpsBootstrap, :dep, 2),
+      do: apply(MixWorkspaceOpsBootstrap, :dep, [committed, __DIR__]),
+      else: committed
   end
 end

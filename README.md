@@ -65,18 +65,12 @@ consumed from a relative path:
 {:linear_sdk, path: "../linear_sdk"}
 ```
 
-Inside this repo, the shared `prismatic` dependencies resolve by one stable
-policy:
-
-- prefer sibling-relative paths when local checkouts exist for normal compile,
-  test, and docs work
-- use release Hex/GitHub sources when running `mix deps.get`, `mix hex.build`,
-  or `mix hex.publish` so `mix.lock` stays publishable
-- otherwise use Hex `prismatic ~> 0.2.0` plus GitHub `subdir:` dependencies for
-  `prismatic_codegen` and `prismatic_provider_testkit`
-
-That keeps local development, packaging, and downstream dependency behavior
-aligned without requiring a committed vendored `deps/` tree.
+Inside this repo, the shared `prismatic` dependencies are ordinary committed Mix
+tuples: Hex for the published runtime and `main`-branch Git tuples for the two
+unpublished tooling packages. When Mix Workspace Ops manages a command, its
+bootstrap may replace only their source coordinates from the portfolio registry—for
+example, with local sibling projects—while preserving the call-site options. There
+is no repository-local source resolver or source-selection environment variable.
 
 ## Real Linear Onboarding
 
