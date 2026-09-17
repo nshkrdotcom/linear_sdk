@@ -1,0 +1,38 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": "linear.xml",
+    "style": "xml"
+  },
+  "include": [
+    "lib/**/*.{ex,exs}",
+    "mix.exs",
+    "guides/*.md",
+    "*.md"
+  ],
+  "ignore": {
+    "customPatterns": [
+      "guides/api/**",
+      "lib/linear_sdk/generated/**",
+      "lib/linear_sdk/enums/**",
+      "lib/linear_sdk/inputs/**",
+      "lib/linear_sdk/interfaces/**",
+      "lib/linear_sdk/mutations/**",
+      "lib/linear_sdk/objects/**",
+      "lib/linear_sdk/queries/**",
+      "lib/linear_sdk/scalars/**",
+      "lib/linear_sdk/subscriptions/**",
+      "lib/linear_sdk/unions/**",
+      "lib/linear_sdk/enums.ex",
+      "lib/linear_sdk/inputs.ex",
+      "lib/linear_sdk/interfaces.ex",
+      "lib/linear_sdk/mutations.ex",
+      "lib/linear_sdk/objects.ex",
+      "lib/linear_sdk/queries.ex",
+      "lib/linear_sdk/scalars.ex",
+      "lib/linear_sdk/subscriptions.ex",
+      "lib/linear_sdk/unions.ex",
+      "lib/linear_sdk/generated.ex"
+    ]
+  }
+}
